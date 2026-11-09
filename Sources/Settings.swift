@@ -49,7 +49,6 @@ final class AppSettings: ObservableObject {
     @Published var rehideDelay: Double { didSet { defaults.set(rehideDelay, forKey: Key.rehideDelay) } }
     @Published var showOnHover: Bool { didSet { defaults.set(showOnHover, forKey: Key.showOnHover) } }
     @Published var showOnClick: Bool { didSet { defaults.set(showOnClick, forKey: Key.showOnClick) } }
-    @Published var showSectionDividers: Bool { didSet { defaults.set(showSectionDividers, forKey: Key.showSectionDividers) } }
     @Published var alwaysHiddenEnabled: Bool { didSet { defaults.set(alwaysHiddenEnabled, forKey: Key.alwaysHiddenEnabled) } }
     @Published var iconStyle: IconStyle { didSet { defaults.set(iconStyle.rawValue, forKey: Key.iconStyle) } }
     @Published var hideNonAppleIcons: Bool { didSet { defaults.set(hideNonAppleIcons, forKey: Key.hideNonAppleIcons) } }
@@ -95,7 +94,6 @@ final class AppSettings: ObservableObject {
         static let rehideDelay = "rehideDelay"
         static let showOnHover = "showOnHover"
         static let showOnClick = "showOnClick"
-        static let showSectionDividers = "showSectionDividers"
         static let alwaysHiddenEnabled = "alwaysHiddenEnabled"
         static let iconStyle = "iconStyle"
         static let hideNonAppleIcons = "hideNonAppleIcons"
@@ -134,7 +132,6 @@ final class AppSettings: ObservableObject {
             Key.rehideDelay: 10.0,
             Key.showOnHover: false,
             Key.showOnClick: true,
-            Key.showSectionDividers: true,
             Key.alwaysHiddenEnabled: false,
             Key.iconStyle: IconStyle.snowflake.rawValue,
             Key.hideNonAppleIcons: false,
@@ -163,7 +160,6 @@ final class AppSettings: ObservableObject {
         rehideDelay = defaults.double(forKey: Key.rehideDelay)
         showOnHover = defaults.bool(forKey: Key.showOnHover)
         showOnClick = defaults.bool(forKey: Key.showOnClick)
-        showSectionDividers = defaults.bool(forKey: Key.showSectionDividers)
         alwaysHiddenEnabled = defaults.bool(forKey: Key.alwaysHiddenEnabled)
         iconStyle = IconStyle(rawValue: defaults.string(forKey: Key.iconStyle) ?? "") ?? .snowflake
         hideNonAppleIcons = defaults.bool(forKey: Key.hideNonAppleIcons)

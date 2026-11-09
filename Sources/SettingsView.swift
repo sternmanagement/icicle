@@ -183,7 +183,6 @@ private struct GeneralPane: View {
                 LabeledContent("Menu bar icon") {
                     IconStylePicker(selection: $settings.iconStyle)
                 }
-                Toggle("Show section divider icons", isOn: $settings.showSectionDividers)
             }
 
             Section("Showing hidden items") {
@@ -377,7 +376,7 @@ private struct LayoutPane: View {
                         MenuBarMock(alwaysHiddenEnabled: settings.alwaysHiddenEnabled)
                         VStack(alignment: .leading, spacing: 8) {
                             Step(number: 1, text: "Click **Show All Items** so every icon is on screen.")
-                            Step(number: 2, text: "Hold **⌘ Command** and drag icons in the menu bar. Anything left of the **‹** divider gets hidden.")
+                            Step(number: 2, text: "Hold **⌘ Command** and drag icons in the menu bar. Anything left of the thin divider line gets hidden.")
                             Step(number: 3, text: "Click the **❄** icon to hide or show that section.")
                         }
                         Button(action: showAllItems) {
@@ -557,9 +556,9 @@ private struct MenuBarMock: View {
     }
 
     private func divider(dimmed: Bool) -> some View {
-        Image(systemName: "chevron.compact.left")
-            .fontWeight(.bold)
-            .opacity(dimmed ? 0.4 : 1)
+        Capsule()
+            .frame(width: 2, height: 13)
+            .opacity(dimmed ? 0.25 : 0.55)
     }
 
     private func legend(_ title: String, tint: Color) -> some View {

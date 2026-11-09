@@ -4,7 +4,7 @@ import Combine
 /// Owns Icicle's status items and the show/hide logic.
 ///
 /// Menu bar layout, left to right:
-///   [always-hidden items] ‹ [hidden items] ‹ [visible items] ❄ [system items]
+///   [always-hidden items] | [hidden items] | [visible items] ❄ [system items]
 ///
 /// Each divider is an NSStatusItem. To hide a section, its divider's length is set to a huge value,
 /// which pushes every item to its left off the screen's left edge. The user places the dividers with ⌘-drag.
@@ -221,7 +221,8 @@ final class MenuBarManager: NSObject {
     private func expand(_ item: NSStatusItem, dimmed: Bool) {
         let id = ObjectIdentifier(item)
         collapsedItems.remove(id)
-        if settings.showSectionDividers || isArranging {
+        // Dividers stay invisible, except while arranging, when a faint line marks where to drop icons.
+        if isArranging {
             item.length = NSStatusItem.variableLength
             item.button?.image = Self.dividerImage
             item.button?.appearsDisabled = dimmed
@@ -262,11 +263,15 @@ final class MenuBarManager: NSObject {
         return screen?.frame.minX ?? 0
     }
 
-    private static let dividerImage: NSImage? = {
-        let config = NSImage.SymbolConfiguration(pointSize: 13, weight: .semibold)
-        let image = NSImage(systemSymbolName: "chevron.compact.left", accessibilityDescription: "Section divider")?
-            .withSymbolConfiguration(config)
-        image?.isTemplate = true
+    /// A thin vertical line, shown only while arranging.
+    private static let dividerImage: NSImage = {
+        let image = NSImage(size: NSSize(width: 9, height: 16), flipped: false) { rect in
+            NSColor.black.withAlphaComponent(0.5).setFill()
+            NSBezierPath(roundedRect: NSRect(x: rect.midX - 1, y: 1, width: 2, height: rect.height - 2), xRadius: 1, yRadius: 1).fill()
+            return true
+        }
+        image.isTemplate = true
+        image.accessibilityDescription = "Section divider"
         return image
     }()
 
@@ -283,7 +288,7 @@ final class MenuBarManager: NSObject {
         NSApp.activate()
         let alert = NSAlert()
         alert.messageText = "Move the always-hidden divider"
-        alert.informativeText = "The dimmed divider (‹) is to the right of the hidden-section divider, so it can't hide anything yet. Hold ⌘ and drag the dimmed divider further left."
+        alert.informativeText = "The always-hidden divider (the fainter line) is to the right of the hidden-section divider, so it can't hide anything yet. Hold ⌘ and drag the fainter line further left."
         alert.runModal()
     }
 
