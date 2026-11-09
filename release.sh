@@ -1,6 +1,6 @@
 #!/bin/bash
 # Publishes a new version: bumps the version, builds and installs the app, tags it,
-# and creates a GitHub Release with a downloadable Icicle.zip.
+# and creates a GitHub Release with a drag-to-install Icicle.dmg (plus a zip).
 #
 #   ./release.sh            # 1.2.3 -> 1.2.4
 #   ./release.sh minor      # 1.2.3 -> 1.3.0
@@ -39,6 +39,8 @@ BUILD_NUMBER="$(( $(/usr/libexec/PlistBuddy -c "Print CFBundleVersion" "$PLIST")
 echo "Releasing Icicle $VERSION (build $BUILD_NUMBER)"
 
 ./build.sh --install
+DMG="build/Icicle-$TAG.dmg"
+./make_dmg.sh "$DMG"
 ZIP="build/Icicle-$TAG.zip"
 ditto -c -k --keepParent build/Icicle.app "$ZIP"
 
@@ -53,7 +55,9 @@ NOTES="$(mktemp)"
     echo
     echo "## Install"
     echo
-    echo "Download **Icicle-$TAG.zip**, unzip it and drag **Icicle** into Applications."
+    echo "Download **Icicle-$TAG.dmg**, open it and drag **Icicle** onto the Applications folder."
+    echo "(Icicle-$TAG.zip has the same app, if you prefer.)"
+    echo
     echo "It isn't notarized by Apple, so the first time macOS may refuse to open it: go to"
     echo "System Settings → Privacy & Security and click **Open Anyway**. Or build it yourself with \`./build.sh --install\`."
 } > "$NOTES"
@@ -63,5 +67,5 @@ git commit -q -m "Release $TAG" ${RELEASE_TRAILER:+-m "$RELEASE_TRAILER"}
 git tag -a "$TAG" -m "Icicle $VERSION"
 git push -q origin HEAD "$TAG"
 
-gh release create "$TAG" "$ZIP" --title "Icicle $VERSION" --notes-file "$NOTES"
+gh release create "$TAG" "$DMG" "$ZIP" --title "Icicle $VERSION" --notes-file "$NOTES"
 rm -f "$NOTES"

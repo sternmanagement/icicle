@@ -18,7 +18,7 @@ A macOS menu bar manager with Windows 11-style window snapping. Inspired by [Ice
 
 ## Download
 
-Grab the latest **Icicle-vX.Y.Z.zip** from [Releases](https://github.com/sternmanagement/icicle/releases/latest), unzip it and drag Icicle into Applications. It isn't notarized by Apple, so the first launch needs System Settings → Privacy & Security → **Open Anyway**.
+Grab the latest **Icicle-vX.Y.Z.dmg** from [Releases](https://github.com/sternmanagement/icicle/releases/latest), open it and drag Icicle onto the Applications folder. It isn't notarized by Apple, so the first launch needs System Settings → Privacy & Security → **Open Anyway**.
 
 ## Build
 
@@ -27,6 +27,7 @@ Requires macOS 14+ and the Xcode command line tools.
 ```bash
 ./build.sh            # builds build/Icicle.app
 ./build.sh --install  # also copies it to /Applications
+./make_dmg.sh         # packages build/Icicle.dmg (installs dmgbuild on first run)
 ```
 
 macOS opens Mission Control when a window is dragged to the top of the screen, and its own tiling reacts to edge drags. Turn on **Settings → Window Snapping → Let Icicle handle window dragging** to switch both off (this restarts the Dock; turn it off again to restore them).
