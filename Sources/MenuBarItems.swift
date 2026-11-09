@@ -137,8 +137,9 @@ final class MenuBarItemsModel: ObservableObject {
     @Published private(set) var entries: [Entry] = []
     @Published private(set) var movingID: String?
     @Published var failure: String?
-    /// While the list is on screen every section stays expanded, so positions are real and items can be dragged.
-    private var isEditing = false
+    /// While editing, every section stays expanded, so positions are real and items can be dragged.
+    /// Collapsed, hidden icons sit in macOS's overflow with no usable position, so the list is only rescanned then.
+    @Published private(set) var isEditing = false
 
     func startEditing() {
         guard !isEditing else { return }
@@ -157,7 +158,7 @@ final class MenuBarItemsModel: ObservableObject {
     }
 
     func refresh() {
-        guard let manager, movingID == nil else { return }
+        guard let manager, movingID == nil, isEditing else { return }
         DispatchQueue.global(qos: .userInitiated).async {
             let items = MenuBarItemScanner.scan()
             DispatchQueue.main.async {
@@ -211,11 +212,14 @@ final class MenuBarItemsModel: ObservableObject {
         DispatchQueue.global(qos: .userInitiated).async {
             if !wasEditing { usleep(500_000) } // let the expanded dividers settle
             let failures = work(manager)
+            // Scan before anything collapses again; afterwards hidden icons have no real position.
+            let items = MenuBarItemScanner.scan()
             DispatchQueue.main.async {
+                let frames = manager.dividerFrames()
+                self.entries = items.map { Entry(item: $0, section: frames.section(of: $0)) }
                 if !self.isEditing { manager.endArranging() }
                 self.movingID = nil
                 self.failure = failures.first
-                self.refresh()
             }
         }
     }

@@ -11,6 +11,8 @@ import Combine
 final class MenuBarManager: NSObject {
     var openSettings: ((SettingsTab) -> Void)?
     var snapFrontWindow: ((CGRect) -> Void)?
+    /// Asks the layout editor to stop holding every section open.
+    var requestEndArranging: (() -> Void)?
 
     private enum Name {
         static let first = "IcicleIcon"
@@ -85,10 +87,12 @@ final class MenuBarManager: NSObject {
     // MARK: - Public actions
 
     func toggleHidden() {
+        if endArrangingForUser() { return }
         isHiddenShown ? hideAll() : showHidden()
     }
 
     func toggleAlwaysHidden() {
+        if endArrangingForUser() { return }
         guard let ah = alwaysHiddenDivider else { return }
         if isHiddenShown && isAlwaysHiddenShown {
             hideAll()
@@ -132,6 +136,14 @@ final class MenuBarManager: NSObject {
     func endArranging() {
         isArranging = false
         hideAll()
+    }
+
+    /// While the layout editor holds everything open, clicking ❄ (or the hotkey) means "done arranging":
+    /// close the editor's show-all mode so the click hides icons as usual.
+    private func endArrangingForUser() -> Bool {
+        guard isArranging else { return false }
+        requestEndArranging?()
+        return true
     }
 
     func dividerFrames() -> DividerFrames {
@@ -329,6 +341,8 @@ final class MenuBarManager: NSObject {
         guard let event = NSApp.currentEvent else { return }
         if isMenuClick(event) {
             showMenu(below: hiddenDivider)
+        } else if endArrangingForUser() {
+            return
         } else if isHiddenShown {
             hideAll()
         } else if settings.showOnClick {
@@ -340,6 +354,8 @@ final class MenuBarManager: NSObject {
         guard let event = NSApp.currentEvent, let ah = alwaysHiddenDivider else { return }
         if isMenuClick(event) {
             showMenu(below: ah)
+        } else if endArrangingForUser() {
+            return
         } else if isAlwaysHiddenShown {
             isAlwaysHiddenShown = false
             updateLayout()

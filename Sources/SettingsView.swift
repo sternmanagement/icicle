@@ -274,6 +274,18 @@ private struct LayoutPane: View {
 
     var body: some View {
         Form {
+            if trusted, !items.isEditing {
+                Section {
+                    HStack(spacing: 12) {
+                        Image(systemName: "eye.slash").font(.title3).foregroundStyle(.secondary)
+                        Text("Hidden icons are tucked away again. Edit the layout to show every icon and rearrange them.")
+                            .fixedSize(horizontal: false, vertical: true)
+                        Spacer()
+                        Button("Edit Layout") { items.startEditing() }
+                            .buttonStyle(.borderedProminent)
+                    }
+                }
+            }
             if trusted {
                 Section {
                     HStack {
@@ -318,7 +330,7 @@ private struct LayoutPane: View {
                                     Label(failure, systemImage: "exclamationmark.triangle.fill")
                                         .foregroundStyle(.orange)
                                 }
-                                Text("Pick a section for any icon. Icicle ⌘-drags it there for you, so the pointer jumps for a moment. Every icon stays shown while this page is open.")
+                                Text("Pick a section for any icon. Icicle ⌘-drags it there for you, so the pointer jumps for a moment. Every icon stays shown while you edit; click ❄ when you're done to hide them.")
                                     .foregroundStyle(.secondary)
                             }
                             .font(.caption)

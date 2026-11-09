@@ -14,6 +14,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         manager.openSettings = { [weak self] tab in self?.settingsWindow.show(tab: tab) }
         manager.snapFrontWindow = { [weak self] zone in self?.snapper.snapFocusedWindow(to: zone) }
         settingsWindow.itemsModel.manager = manager
+        manager.requestEndArranging = { [weak self] in self?.settingsWindow.itemsModel.stopEditing() }
         settingsWindow.showAllItems = { [weak self] in self?.manager.showHidden(includingAlwaysHidden: true) }
         snapper.start()
         manager.start()
