@@ -1,4 +1,5 @@
 import AppKit
+import Carbon.HIToolbox
 import Combine
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
@@ -58,7 +59,7 @@ final class Extras {
     private var cancellables = Set<AnyCancellable>()
 
     func start() {
-        settings.objectWillChange
+        settings.objectWillChange.merge(with: WorkspaceStore.shared.objectWillChange)
             .receive(on: DispatchQueue.main)
             .sink { [weak self] in self?.apply() }
             .store(in: &cancellables)
@@ -77,6 +78,15 @@ final class Extras {
         }
         HotKeyCenter.shared.register(id: 31, combo: switcherCombo?.withShift) { [weak self] in
             if let switcherCombo { self?.windowSwitcher.advance(backwards: true, combo: switcherCombo) }
+        }
+
+        let store = WorkspaceStore.shared
+        for (index, keyCode) in WorkspaceStore.numberKeyCodes.enumerated() {
+            let enabled = settings.workspacesEnabled && settings.workspaceHotKeysEnabled && index < store.workspaces.count
+            let combo = KeyCombo(keyCode: UInt32(keyCode), carbonModifiers: UInt32(controlKey | optionKey), keyName: "\(index + 1)")
+            HotKeyCenter.shared.register(id: 40 + UInt32(index), combo: enabled ? combo : nil) {
+                if store.workspaces.indices.contains(index) { store.restore(store.workspaces[index]) }
+            }
         }
     }
 }

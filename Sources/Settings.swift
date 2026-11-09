@@ -68,6 +68,8 @@ final class AppSettings: ObservableObject {
 
     @Published var windowSwitcherEnabled: Bool { didSet { defaults.set(windowSwitcherEnabled, forKey: Key.windowSwitcherEnabled) } }
     @Published var windowSwitcherHotKey: KeyCombo? { didSet { save(windowSwitcherHotKey, forKey: Key.windowSwitcherHotKey) } }
+    @Published var workspacesEnabled: Bool { didSet { defaults.set(workspacesEnabled, forKey: Key.workspacesEnabled) } }
+    @Published var workspaceHotKeysEnabled: Bool { didSet { defaults.set(workspaceHotKeysEnabled, forKey: Key.workspaceHotKeysEnabled) } }
 
     var hasCompletedOnboarding: Bool {
         get { defaults.bool(forKey: Key.hasCompletedOnboarding) }
@@ -97,6 +99,8 @@ final class AppSettings: ObservableObject {
         static let clipboardHotKey = "clipboardHotKey"
         static let windowSwitcherEnabled = "windowSwitcherEnabled"
         static let windowSwitcherHotKey = "windowSwitcherHotKey"
+        static let workspacesEnabled = "workspacesEnabled"
+        static let workspaceHotKeysEnabled = "workspaceHotKeysEnabled"
     }
 
     private init() {
@@ -115,6 +119,8 @@ final class AppSettings: ObservableObject {
             Key.clipboardEnabled: true,
             Key.clipboardAutoPaste: true,
             Key.windowSwitcherEnabled: false,
+            Key.workspacesEnabled: false,
+            Key.workspaceHotKeysEnabled: true,
         ])
 
         autoRehide = defaults.bool(forKey: Key.autoRehide)
@@ -138,6 +144,8 @@ final class AppSettings: ObservableObject {
         clipboardHotKey = Self.load(Key.clipboardHotKey, from: defaults, fallback: .defaultClipboard)
         windowSwitcherEnabled = defaults.bool(forKey: Key.windowSwitcherEnabled)
         windowSwitcherHotKey = Self.load(Key.windowSwitcherHotKey, from: defaults, fallback: .defaultWindowSwitcher)
+        workspacesEnabled = defaults.bool(forKey: Key.workspacesEnabled)
+        workspaceHotKeysEnabled = defaults.bool(forKey: Key.workspaceHotKeysEnabled)
     }
 
     // Empty data marks a shortcut the user deliberately cleared, so it doesn't fall back to the default.

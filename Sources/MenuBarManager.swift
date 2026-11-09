@@ -368,6 +368,11 @@ final class MenuBarManager: NSObject {
         let snapItem = menuItem("Snap Front Window", symbol: "rectangle.split.2x1", action: nil)
         snapItem.submenu = snapMenu()
         menu.addItem(snapItem)
+        if settings.workspacesEnabled {
+            let workspacesItem = menuItem("Workspaces", symbol: "square.grid.3x1.below.line.grid.1x2", action: nil)
+            workspacesItem.submenu = workspacesMenu()
+            menu.addItem(workspacesItem)
+        }
 
         menu.addItem(.separator())
         menu.addItem(menuItem("Arrange Menu Bar…", symbol: "menubar.rectangle", action: #selector(menuOpenLayout)))
@@ -408,6 +413,23 @@ final class MenuBarManager: NSObject {
         return menu
     }
 
+    private func workspacesMenu() -> NSMenu {
+        let menu = NSMenu()
+        for (index, workspace) in WorkspaceStore.shared.workspaces.enumerated() {
+            let item = NSMenuItem(title: workspace.name, action: #selector(menuRestoreWorkspace(_:)), keyEquivalent: "")
+            item.target = self
+            item.representedObject = workspace.id
+            if index < 9, settings.workspaceHotKeysEnabled {
+                item.keyEquivalent = "\(index + 1)"
+                item.keyEquivalentModifierMask = [.control, .option]
+            }
+            menu.addItem(item)
+        }
+        if !WorkspaceStore.shared.workspaces.isEmpty { menu.addItem(.separator()) }
+        menu.addItem(menuItem("Save Current Layout…", symbol: "plus.square.on.square", action: #selector(menuOpenWindows)))
+        return menu
+    }
+
     private func menuItem(_ title: String, symbol: String, action: Selector?, key: String = "") -> NSMenuItem {
         let item = NSMenuItem(title: title, action: action, keyEquivalent: key)
         item.target = self
@@ -434,6 +456,12 @@ final class MenuBarManager: NSObject {
         guard let value = sender.representedObject as? NSValue else { return }
         snapFrontWindow?(value.rectValue)
     }
+    @objc private func menuRestoreWorkspace(_ sender: NSMenuItem) {
+        guard let id = sender.representedObject as? UUID,
+              let workspace = WorkspaceStore.shared.workspaces.first(where: { $0.id == id }) else { return }
+        WorkspaceStore.shared.restore(workspace)
+    }
+    @objc private func menuOpenWindows() { openSettings?(.windows) }
     @objc private func menuToggleSystemDrag() {
         SystemDragSettings.setIcicleHandlesDrags(!SystemDragSettings.icicleHandlesDrags)
     }

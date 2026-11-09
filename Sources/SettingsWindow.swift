@@ -23,7 +23,7 @@ enum SettingsTab: String, CaseIterable, Identifiable, Hashable {
         case .general: return "How hidden items appear and disappear."
         case .layout: return "Choose which icons stay in your menu bar."
         case .snapping: return "Drag a window to the top of the screen to pick a layout."
-        case .windows: return "Switch between windows from the keyboard."
+        case .windows: return "Switch between windows and save layouts."
         case .clipboard: return "Everything you've copied, one shortcut away."
         case .hotkeys: return "Keyboard shortcuts that work in any app."
         case .about: return "Icicle, a tidy menu bar for your Mac."
