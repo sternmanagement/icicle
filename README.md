@@ -16,6 +16,10 @@ A macOS menu bar manager with Windows 11-style window snapping. Inspired by [Ice
 - **Focus border** — an optional coloured outline around the window you're working in.
 - **Global hotkeys** — ⌃⌥⌘I toggles hidden icons; ⌃⌥← / ⌃⌥→ / ⌃⌥↩ snap the front window.
 
+## Download
+
+Grab the latest **Icicle-vX.Y.Z.zip** from [Releases](https://github.com/sternmanagement/icicle/releases/latest), unzip it and drag Icicle into Applications. It isn't notarized by Apple, so the first launch needs System Settings → Privacy & Security → **Open Anyway**.
+
 ## Build
 
 Requires macOS 14+ and the Xcode command line tools.
@@ -28,3 +32,10 @@ Requires macOS 14+ and the Xcode command line tools.
 macOS opens Mission Control when a window is dragged to the top of the screen, and its own tiling reacts to edge drags. Turn on **Settings → Window Snapping → Let Icicle handle window dragging** to switch both off (this restarts the Dock; turn it off again to restore them).
 
 Window snapping, the icon list and hover-to-show need Accessibility access (Settings → Window Snapping → Grant Access). `build.sh` signs with a local self-signed identity (kept in `~/Library/Application Support/Icicle Build`), so the permission survives rebuilds.
+
+## Releasing
+
+```bash
+./release.sh          # bump the patch version, build, tag and publish a GitHub Release
+./release.sh minor    # or major, or an exact version like 1.4.0
+```
