@@ -19,4 +19,6 @@ Requires macOS 14+ and the Xcode command line tools.
 ./build.sh --install  # also copies it to /Applications
 ```
 
+macOS opens Mission Control when a window is dragged to the top of the screen, and its own tiling reacts to edge drags. Turn on **Settings → Window Snapping → Let Icicle handle window dragging** to switch both off (this restarts the Dock; turn it off again to restore them).
+
 Window snapping and hover-to-show need Accessibility access (Settings → Window Snapping → Grant Access). The build is ad-hoc signed, so macOS may ask again after each rebuild.

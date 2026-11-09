@@ -316,6 +316,12 @@ final class MenuBarManager: NSObject {
             item.representedObject = NSValue(rect: zone)
             menu.addItem(item)
         }
+        menu.addItem(.separator())
+        let dragItem = NSMenuItem(title: "Let Icicle Handle Window Dragging",
+                                  action: #selector(menuToggleSystemDrag), keyEquivalent: "")
+        dragItem.target = self
+        dragItem.state = SystemDragSettings.icicleHandlesDrags ? .on : .off
+        menu.addItem(dragItem)
         return menu
     }
 
@@ -344,6 +350,9 @@ final class MenuBarManager: NSObject {
     @objc private func menuSnap(_ sender: NSMenuItem) {
         guard let value = sender.representedObject as? NSValue else { return }
         snapFrontWindow?(value.rectValue)
+    }
+    @objc private func menuToggleSystemDrag() {
+        SystemDragSettings.setIcicleHandlesDrags(!SystemDragSettings.icicleHandlesDrags)
     }
 
     // MARK: - Auto-rehide

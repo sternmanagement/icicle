@@ -139,6 +139,7 @@ private struct AccessibilityRow: View {
             Image(systemName: trusted ? "checkmark.shield.fill" : "exclamationmark.shield.fill")
                 .font(.title2)
                 .foregroundStyle(trusted ? .green : .orange)
+                .frame(width: 26)
             VStack(alignment: .leading, spacing: 2) {
                 Text("Accessibility access")
                 Text(reason).font(.caption).foregroundStyle(.secondary)
@@ -435,28 +436,60 @@ private struct SnappingPane: View {
             }
 
             Section {
+                SystemDragRow()
                 AccessibilityRow(reason: "Required to move and resize other apps' windows.")
-            }
-
-            Section {
-                HStack(alignment: .top, spacing: 10) {
-                    Image(systemName: "info.circle.fill").foregroundStyle(.blue)
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("macOS has its own window tiling, which can react to the same drags. If both trigger, turn off the system's version under **Desktop & Dock → Windows**.")
-                            .font(.callout)
-                            .fixedSize(horizontal: false, vertical: true)
-                        Button("Open Desktop & Dock Settings…") {
-                            if let url = URL(string: "x-apple.systempreferences:com.apple.Desktop-Settings.extension") {
-                                NSWorkspace.shared.open(url)
-                            }
-                        }
-                        .buttonStyle(.link)
-                    }
-                }
             }
         }
         .formStyle(.grouped)
         .onReceive(cycle) { _ in demoHighlight += 1 }
+    }
+}
+
+/// Switch that turns off Mission Control's top-edge drag and macOS tiling so Icicle gets the drag.
+private struct SystemDragRow: View {
+    @State private var icicleHandles = SystemDragSettings.icicleHandlesDrags
+    @State private var detail = SystemDragRow.currentDetail()
+    private let poll = Timer.publish(every: 2, on: .main, in: .common).autoconnect()
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 12) {
+            Image(systemName: icicleHandles ? "rectangle.split.2x1.fill" : "exclamationmark.triangle.fill")
+                .font(.title2)
+                .foregroundStyle(icicleHandles ? .green : .orange)
+                .frame(width: 26)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Let Icicle handle window dragging")
+                Text(detail).font(.caption).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer()
+            Toggle("", isOn: Binding(
+                get: { icicleHandles },
+                set: { enabled in
+                    SystemDragSettings.setIcicleHandlesDrags(enabled)
+                    refresh()
+                }
+            ))
+            .labelsHidden()
+            .toggleStyle(.switch)
+        }
+        .onReceive(poll) { _ in refresh() }
+    }
+
+    private func refresh() {
+        icicleHandles = SystemDragSettings.icicleHandlesDrags
+        detail = Self.currentDetail()
+    }
+
+    private static func currentDetail() -> String {
+        var conflicts: [String] = []
+        if SystemDragSettings.missionControlOnTopDrag { conflicts.append("dragging to the top opens Mission Control") }
+        if SystemDragSettings.systemTiling { conflicts.append("macOS tiling shows its own previews") }
+        guard !conflicts.isEmpty else {
+            return "Mission Control and macOS tiling no longer react to drags. Turn off to restore them."
+        }
+        let joined = conflicts.joined(separator: " and ")
+        return "Right now \(joined). Turning this on switches those off and restarts the Dock."
     }
 }
 
