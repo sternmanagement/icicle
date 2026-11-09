@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 // Settings panes for the extras: clipboard, windows and appearance.
@@ -149,6 +150,20 @@ struct AppearancePane: View {
                 Text("Menu bar tint")
             } footer: {
                 Text("Pick separate colours for light and dark mode; lower the opacity in the colour picker for a subtler wash. macOS picks the menu bar's text colour from your wallpaper, so very dark or very light tints can make it harder to read.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Section {
+                Toggle("Hide the notch", isOn: $settings.hideNotch)
+                    .disabled(!NSScreen.screens.contains(where: MenuBarAppearance.hasNotch))
+            } header: {
+                Text("Notch")
+            } footer: {
+                Text(NSScreen.screens.contains(where: MenuBarAppearance.hasNotch)
+                     ? "Paints the menu bar black on displays with a camera notch so the notch blends in. Takes priority over the tint there. Reads best in Dark Mode, where the menu bar text is white."
+                     : "None of your displays has a camera notch.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)

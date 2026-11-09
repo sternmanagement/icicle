@@ -26,24 +26,36 @@ final class MenuBarAppearance {
         rebuild()
     }
 
-    /// Colours update live through the SwiftUI view; panels only need rebuilding when the feature flips.
-    private var builtForEnabled = false
+    /// Colours update live through the SwiftUI view; panels only need rebuilding when a feature flips.
+    private var builtFor: (tint: Bool, notch: Bool) = (false, false)
 
     private func settingsChanged() {
-        if settings.menuBarTintEnabled != builtForEnabled { rebuild() }
+        if settings.menuBarTintEnabled != builtFor.tint || settings.hideNotch != builtFor.notch { rebuild() }
     }
 
     private func rebuild() {
-        builtForEnabled = settings.menuBarTintEnabled
+        builtFor = (settings.menuBarTintEnabled, settings.hideNotch)
         panels.forEach { $0.orderOut(nil) }
         panels.removeAll()
-        guard settings.menuBarTintEnabled else { return }
         for screen in NSScreen.screens {
+            // Hiding the notch wins on displays that have one: a black bar makes the cut-out vanish.
+            let content: AnyView
+            if settings.hideNotch, Self.hasNotch(screen) {
+                content = AnyView(Color.black)
+            } else if settings.menuBarTintEnabled {
+                content = AnyView(MenuBarTintView(settings: settings))
+            } else {
+                continue
+            }
             let panel = makePanel(for: screen)
-            panel.contentView = NSHostingView(rootView: MenuBarTintView(settings: settings))
+            panel.contentView = NSHostingView(rootView: content)
             panel.orderFrontRegardless()
             panels.append(panel)
         }
+    }
+
+    static func hasNotch(_ screen: NSScreen) -> Bool {
+        screen.auxiliaryTopLeftArea != nil
     }
 
     private func makePanel(for screen: NSScreen) -> NSPanel {

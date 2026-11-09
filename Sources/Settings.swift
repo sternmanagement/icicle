@@ -77,6 +77,7 @@ final class AppSettings: ObservableObject {
     @Published var tintLightEnd: String { didSet { defaults.set(tintLightEnd, forKey: Key.tintLightEnd) } }
     @Published var tintDarkStart: String { didSet { defaults.set(tintDarkStart, forKey: Key.tintDarkStart) } }
     @Published var tintDarkEnd: String { didSet { defaults.set(tintDarkEnd, forKey: Key.tintDarkEnd) } }
+    @Published var hideNotch: Bool { didSet { defaults.set(hideNotch, forKey: Key.hideNotch) } }
 
     var hasCompletedOnboarding: Bool {
         get { defaults.bool(forKey: Key.hasCompletedOnboarding) }
@@ -114,6 +115,7 @@ final class AppSettings: ObservableObject {
         static let tintLightEnd = "tintLightEnd"
         static let tintDarkStart = "tintDarkStart"
         static let tintDarkEnd = "tintDarkEnd"
+        static let hideNotch = "hideNotch"
     }
 
     private init() {
@@ -140,6 +142,7 @@ final class AppSettings: ObservableObject {
             Key.tintLightEnd: "#D3B5FFB3",
             Key.tintDarkStart: "#1E3A8ACC",
             Key.tintDarkEnd: "#5B21B6CC",
+            Key.hideNotch: false,
         ])
 
         autoRehide = defaults.bool(forKey: Key.autoRehide)
@@ -171,6 +174,7 @@ final class AppSettings: ObservableObject {
         tintLightEnd = defaults.string(forKey: Key.tintLightEnd) ?? ""
         tintDarkStart = defaults.string(forKey: Key.tintDarkStart) ?? ""
         tintDarkEnd = defaults.string(forKey: Key.tintDarkEnd) ?? ""
+        hideNotch = defaults.bool(forKey: Key.hideNotch)
     }
 
     // Empty data marks a shortcut the user deliberately cleared, so it doesn't fall back to the default.
