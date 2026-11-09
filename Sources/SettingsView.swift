@@ -275,6 +275,29 @@ private struct LayoutPane: View {
     var body: some View {
         Form {
             if trusted {
+                Section {
+                    HStack {
+                        Toggle("Hide all non-Apple icons", isOn: Binding(
+                            get: { settings.hideNonAppleIcons },
+                            set: { hide in
+                                settings.hideNonAppleIcons = hide
+                                items.moveAllNonApple(to: hide ? .hidden : .visible)
+                            }
+                        ))
+                        .disabled(items.movingID != nil)
+                        if items.isBatchMoving {
+                            ProgressView().controlSize(.small)
+                        }
+                    }
+                } footer: {
+                    Text(items.isBatchMoving
+                         ? "Moving icons… the pointer will jump around for a moment."
+                         : "Puts every app's icon in the Hidden section so only Apple's (battery, Wi-Fi, clock…) stay out. Click ❄ to see them. Turn it off to bring them all back.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
                 ForEach(sections) { section in
                     Section {
                         let entries = items.entries.filter { $0.section == section && !$0.item.isInSystemOverflow }

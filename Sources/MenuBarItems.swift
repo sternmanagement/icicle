@@ -48,12 +48,17 @@ struct MenuBarItem: Identifiable, Equatable {
         return NSRunningApplication(processIdentifier: pid)?.icon
     }
 
+    /// Apple's own items (battery, Wi-Fi, clock…) as opposed to third-party apps'.
+    var isApple: Bool { bundleID?.hasPrefix("com.apple.") ?? false }
+
     /// macOS parks items it has no room for (in its overflow menu) far below the menu bar.
     var isInSystemOverflow: Bool { frame.minY > 100 }
 
-    /// The clock and Control Center are pinned to the right end of the menu bar by macOS.
+    /// The clock and Control Center are pinned to the right end of the menu bar by macOS, and so is
+    /// macOS 27's own "Show Hidden Menu Bar Items" button (a menu bar agent item with no identifier).
     var isMovable: Bool {
-        !["com.apple.menuextra.clock", "com.apple.menuextra.controlcenter"].contains(identifier)
+        if bundleID == "com.apple.MenuBarAgent", identifier.isEmpty { return false }
+        return !["com.apple.menuextra.clock", "com.apple.menuextra.controlcenter"].contains(identifier)
     }
 
     static func == (a: MenuBarItem, b: MenuBarItem) -> Bool { a.id == b.id && a.frame == b.frame }
@@ -139,7 +144,10 @@ final class MenuBarItemsModel: ObservableObject {
         guard !isEditing else { return }
         isEditing = true
         manager?.beginArranging()
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { self.refresh() }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            // Apps launched since the switch was turned on may have added visible icons; sweep them up.
+            if AppSettings.shared.hideNonAppleIcons { self.moveAllNonApple(to: .hidden) } else { self.refresh() }
+        }
     }
 
     func stopEditing() {
@@ -161,36 +169,70 @@ final class MenuBarItemsModel: ObservableObject {
     }
 
     func move(_ entry: Entry, to target: MenuBarSection) {
-        guard let manager, movingID == nil, entry.section != target else { return }
-        movingID = entry.id
+        guard entry.section != target else { return }
+        runMoves(busyID: entry.id) { manager in
+            Self.drag(entry.id, to: target, manager: manager)
+                ? [] : ["Couldn't move \(entry.item.title). If it's behind the camera notch, hide a few other icons first, or ⌘-drag it by hand."]
+        }
+    }
+
+    /// Moves every non-Apple icon into `target`, one at a time. Icons macOS tucked into its overflow for lack
+    /// of room are picked up as moving others frees space.
+    func moveAllNonApple(to target: MenuBarSection) {
+        runMoves(busyID: Self.batchID) { manager in
+            var skipped = Set<String>()
+            var failed: [String] = []
+            for _ in 0..<60 {
+                let frames = DispatchQueue.main.sync { manager.dividerFrames() }
+                guard let next = MenuBarItemScanner.scan().first(where: {
+                    !$0.isApple && $0.isMovable && !$0.isInSystemOverflow && !skipped.contains($0.id)
+                        && frames.section(of: $0) != target
+                }) else { break }
+                if !Self.drag(next.id, to: target, manager: manager) {
+                    skipped.insert(next.id)
+                    failed.append(next.title)
+                }
+            }
+            return failed.isEmpty ? [] : ["Couldn't move \(failed.joined(separator: ", ")). ⌘-drag them by hand if they're still out of place."]
+        }
+    }
+
+    static let batchID = "*"
+    var isBatchMoving: Bool { movingID == Self.batchID }
+
+    /// Shows every section, runs `work` off the main thread, then restores the menu bar and rescans.
+    private func runMoves(busyID: String, _ work: @escaping (MenuBarManager) -> [String]) {
+        guard let manager, movingID == nil else { return }
+        movingID = busyID
         failure = nil
         let wasEditing = isEditing
         if !wasEditing { manager.beginArranging() }
 
         DispatchQueue.global(qos: .userInitiated).async {
             if !wasEditing { usleep(500_000) } // let the expanded dividers settle
-            var moved = false
-            for _ in 0..<2 {
-                guard let current = MenuBarItemScanner.scan().first(where: { $0.id == entry.id }) else { break }
-                let frames = DispatchQueue.main.sync { manager.dividerFrames() }
-                let section = frames.section(of: current)
-                if section == target { moved = true; break }
-                guard let drop = frames.dropPoint(from: section, to: target, y: current.frame.midY) else { break }
-                MenuBarItemMover.commandDrag(from: CGPoint(x: current.frame.midX, y: current.frame.midY), to: drop)
-                usleep(800_000) // positions take a moment to settle after a drop
-            }
-            if !moved, let after = MenuBarItemScanner.scan().first(where: { $0.id == entry.id }) {
-                moved = DispatchQueue.main.sync { manager.dividerFrames() }.section(of: after) == target
-            }
+            let failures = work(manager)
             DispatchQueue.main.async {
                 if !self.isEditing { manager.endArranging() }
                 self.movingID = nil
-                if !moved {
-                    self.failure = "Couldn't move \(entry.item.title). If it's behind the camera notch, hide a few other icons first, or ⌘-drag it by hand."
-                }
+                self.failure = failures.first
                 self.refresh()
             }
         }
+    }
+
+    /// ⌘-drags one item across the divider and checks where it landed. Call off the main thread.
+    private static func drag(_ id: String, to target: MenuBarSection, manager: MenuBarManager) -> Bool {
+        for _ in 0..<2 {
+            guard let current = MenuBarItemScanner.scan().first(where: { $0.id == id }) else { return false }
+            let frames = DispatchQueue.main.sync { manager.dividerFrames() }
+            let section = frames.section(of: current)
+            if section == target { return true }
+            guard let drop = frames.dropPoint(from: section, to: target, y: current.frame.midY) else { return false }
+            MenuBarItemMover.commandDrag(from: CGPoint(x: current.frame.midX, y: current.frame.midY), to: drop)
+            usleep(800_000) // positions take a moment to settle after a drop
+        }
+        guard let after = MenuBarItemScanner.scan().first(where: { $0.id == id }) else { return false }
+        return DispatchQueue.main.sync { manager.dividerFrames() }.section(of: after) == target
     }
 }
 

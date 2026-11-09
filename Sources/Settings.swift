@@ -52,6 +52,7 @@ final class AppSettings: ObservableObject {
     @Published var showSectionDividers: Bool { didSet { defaults.set(showSectionDividers, forKey: Key.showSectionDividers) } }
     @Published var alwaysHiddenEnabled: Bool { didSet { defaults.set(alwaysHiddenEnabled, forKey: Key.alwaysHiddenEnabled) } }
     @Published var iconStyle: IconStyle { didSet { defaults.set(iconStyle.rawValue, forKey: Key.iconStyle) } }
+    @Published var hideNonAppleIcons: Bool { didSet { defaults.set(hideNonAppleIcons, forKey: Key.hideNonAppleIcons) } }
     @Published var toggleHiddenHotKey: KeyCombo? { didSet { save(toggleHiddenHotKey, forKey: Key.toggleHiddenHotKey) } }
     @Published var toggleAlwaysHiddenHotKey: KeyCombo? { didSet { save(toggleAlwaysHiddenHotKey, forKey: Key.toggleAlwaysHiddenHotKey) } }
 
@@ -97,6 +98,7 @@ final class AppSettings: ObservableObject {
         static let showSectionDividers = "showSectionDividers"
         static let alwaysHiddenEnabled = "alwaysHiddenEnabled"
         static let iconStyle = "iconStyle"
+        static let hideNonAppleIcons = "hideNonAppleIcons"
         static let toggleHiddenHotKey = "toggleHiddenHotKey"
         static let toggleAlwaysHiddenHotKey = "toggleAlwaysHiddenHotKey"
         static let hasCompletedOnboarding = "hasCompletedOnboarding"
@@ -135,6 +137,7 @@ final class AppSettings: ObservableObject {
             Key.showSectionDividers: true,
             Key.alwaysHiddenEnabled: false,
             Key.iconStyle: IconStyle.snowflake.rawValue,
+            Key.hideNonAppleIcons: false,
             Key.snapLayoutsEnabled: true,
             Key.edgeSnappingEnabled: true,
             Key.snapGap: 8.0,
@@ -163,6 +166,7 @@ final class AppSettings: ObservableObject {
         showSectionDividers = defaults.bool(forKey: Key.showSectionDividers)
         alwaysHiddenEnabled = defaults.bool(forKey: Key.alwaysHiddenEnabled)
         iconStyle = IconStyle(rawValue: defaults.string(forKey: Key.iconStyle) ?? "") ?? .snowflake
+        hideNonAppleIcons = defaults.bool(forKey: Key.hideNonAppleIcons)
         toggleHiddenHotKey = Self.load(Key.toggleHiddenHotKey, from: defaults, fallback: .defaultToggleHidden)
         toggleAlwaysHiddenHotKey = Self.load(Key.toggleAlwaysHiddenHotKey, from: defaults, fallback: nil)
         snapLayoutsEnabled = defaults.bool(forKey: Key.snapLayoutsEnabled)

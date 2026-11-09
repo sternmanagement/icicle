@@ -4,7 +4,7 @@ A macOS menu bar manager with Windows 11-style window snapping. Inspired by [Ice
 
 ## Features
 
-- **Hide menu bar icons** — pick Visible, Hidden or Always Hidden for each icon in Settings → Menu Bar Layout (or ⌘-drag icons left of the `‹` divider), then click ❄ to hide or show them. Works with the macOS 27 menu bar, where hidden icons go into the system's overflow.
+- **Hide menu bar icons** — pick Visible, Hidden or Always Hidden for each icon in Settings → Menu Bar Layout (or ⌘-drag icons left of the `‹` divider), then click ❄ to hide or show them. One switch, **Hide all non-Apple icons**, moves every app's icon into the hidden section at once. Works with the macOS 27 menu bar, where hidden icons go into the system's overflow.
 - **Always-hidden section** — a second divider for icons you almost never need (⌥-click ❄ to reveal).
 - **Show on click or hover** over empty menu bar space, with automatic rehiding.
 - **Snap Layouts** — drag a window into the menu bar to pick from 8 layouts; drag to edges or corners for halves and quarters.
