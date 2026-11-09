@@ -116,11 +116,36 @@ struct WindowsPane: View {
             }
 
             Section {
+                Toggle("Outline the focused window", isOn: $settings.focusBorderEnabled)
+                if settings.focusBorderEnabled {
+                    ColorPicker("Colour", selection: $settings.focusBorderColor.color, supportsOpacity: true)
+                    LabeledContent("Thickness") {
+                        HStack {
+                            Slider(value: $settings.focusBorderWidth, in: 2...10, step: 1)
+                                .frame(maxWidth: 220)
+                            Text("\(Int(settings.focusBorderWidth)) pt")
+                                .monospacedDigit()
+                                .foregroundStyle(.secondary)
+                                .frame(width: 40, alignment: .trailing)
+                        }
+                    }
+                }
+            } header: {
+                Text("Focus border")
+            } footer: {
+                Text("Draws a coloured outline around whichever window you're typing in, so it's easy to spot. Hidden for full-screen windows.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Section {
                 AccessibilityRow(reason: "Needed to list, move and bring forward other apps' windows.")
             }
         }
         .formStyle(.grouped)
         .animation(.default, value: settings.workspacesEnabled)
+        .animation(.default, value: settings.focusBorderEnabled)
     }
 
     private func saveLayout() {

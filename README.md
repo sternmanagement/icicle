@@ -13,6 +13,7 @@ A macOS menu bar manager with Windows 11-style window snapping. Inspired by [Ice
 - **Saved workspaces** — save every app's window positions under a name; restore from the ❄ menu or ⌃⌥1–9 (off by default).
 - **Menu bar tint** — a solid colour or gradient behind the menu bar, with separate light and dark mode colours (off by default).
 - **Hide the notch** — a black menu bar on notched displays so the notch disappears (off by default).
+- **Focus border** — an optional coloured outline around the window you're working in.
 - **Global hotkeys** — ⌃⌥⌘I toggles hidden icons; ⌃⌥← / ⌃⌥→ / ⌃⌥↩ snap the front window.
 
 ## Build

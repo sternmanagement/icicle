@@ -79,6 +79,10 @@ final class AppSettings: ObservableObject {
     @Published var tintDarkEnd: String { didSet { defaults.set(tintDarkEnd, forKey: Key.tintDarkEnd) } }
     @Published var hideNotch: Bool { didSet { defaults.set(hideNotch, forKey: Key.hideNotch) } }
 
+    @Published var focusBorderEnabled: Bool { didSet { defaults.set(focusBorderEnabled, forKey: Key.focusBorderEnabled) } }
+    @Published var focusBorderColor: String { didSet { defaults.set(focusBorderColor, forKey: Key.focusBorderColor) } }
+    @Published var focusBorderWidth: Double { didSet { defaults.set(focusBorderWidth, forKey: Key.focusBorderWidth) } }
+
     var hasCompletedOnboarding: Bool {
         get { defaults.bool(forKey: Key.hasCompletedOnboarding) }
         set { defaults.set(newValue, forKey: Key.hasCompletedOnboarding) }
@@ -116,6 +120,9 @@ final class AppSettings: ObservableObject {
         static let tintDarkStart = "tintDarkStart"
         static let tintDarkEnd = "tintDarkEnd"
         static let hideNotch = "hideNotch"
+        static let focusBorderEnabled = "focusBorderEnabled"
+        static let focusBorderColor = "focusBorderColor"
+        static let focusBorderWidth = "focusBorderWidth"
     }
 
     private init() {
@@ -143,6 +150,9 @@ final class AppSettings: ObservableObject {
             Key.tintDarkStart: "#1E3A8ACC",
             Key.tintDarkEnd: "#5B21B6CC",
             Key.hideNotch: false,
+            Key.focusBorderEnabled: false,
+            Key.focusBorderColor: "#3B82F6E6",
+            Key.focusBorderWidth: 4.0,
         ])
 
         autoRehide = defaults.bool(forKey: Key.autoRehide)
@@ -175,6 +185,9 @@ final class AppSettings: ObservableObject {
         tintDarkStart = defaults.string(forKey: Key.tintDarkStart) ?? ""
         tintDarkEnd = defaults.string(forKey: Key.tintDarkEnd) ?? ""
         hideNotch = defaults.bool(forKey: Key.hideNotch)
+        focusBorderEnabled = defaults.bool(forKey: Key.focusBorderEnabled)
+        focusBorderColor = defaults.string(forKey: Key.focusBorderColor) ?? ""
+        focusBorderWidth = defaults.double(forKey: Key.focusBorderWidth)
     }
 
     // Empty data marks a shortcut the user deliberately cleared, so it doesn't fall back to the default.

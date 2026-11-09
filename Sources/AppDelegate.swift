@@ -19,9 +19,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         manager.start()
         extras.start()
         appearance.start()
+        focusBorder.start()
     }
 
     private let appearance = MenuBarAppearance()
+    private let focusBorder = FocusBorder()
 
     private let extras = Extras()
 
