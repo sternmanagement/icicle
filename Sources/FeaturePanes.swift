@@ -48,3 +48,31 @@ struct ClipboardPane: View {
         .animation(.default, value: settings.clipboardEnabled)
     }
 }
+
+struct WindowsPane: View {
+    @ObservedObject var settings: AppSettings
+
+    var body: some View {
+        Form {
+            Section {
+                Toggle("Window switcher", isOn: $settings.windowSwitcherEnabled)
+                LabeledContent("Shortcut") {
+                    KeyRecorder(combo: $settings.windowSwitcherHotKey)
+                }
+                .disabled(!settings.windowSwitcherEnabled)
+            } header: {
+                Text("Switcher")
+            } footer: {
+                Text("Hold the modifier and tap the key to step through every window, minimized ones included. Add ⇧ to go backwards, use the arrow keys, or click a window. Let go to switch; Esc cancels.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Section {
+                AccessibilityRow(reason: "Needed to list windows and bring them forward.")
+            }
+        }
+        .formStyle(.grouped)
+    }
+}

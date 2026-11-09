@@ -23,6 +23,9 @@ struct KeyCombo: Equatable, Codable {
     static let defaultClipboard = KeyCombo(
         keyCode: UInt32(kVK_ANSI_V), carbonModifiers: UInt32(cmdKey | shiftKey), keyName: "V"
     )
+    static let defaultWindowSwitcher = KeyCombo(
+        keyCode: UInt32(kVK_Tab), carbonModifiers: UInt32(optionKey), keyName: "⇥"
+    )
 
     var displayString: String {
         var s = ""

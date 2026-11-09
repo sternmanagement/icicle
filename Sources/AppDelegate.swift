@@ -54,6 +54,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 final class Extras {
     private let settings = AppSettings.shared
     private let clipboardPicker = ClipboardPicker()
+    private let windowSwitcher = WindowSwitcher()
     private var cancellables = Set<AnyCancellable>()
 
     func start() {
@@ -68,6 +69,14 @@ final class Extras {
         ClipboardHistory.shared.setEnabled(settings.clipboardEnabled)
         HotKeyCenter.shared.register(id: 20, combo: settings.clipboardEnabled ? settings.clipboardHotKey : nil) { [weak self] in
             self?.clipboardPicker.toggle()
+        }
+
+        let switcherCombo = settings.windowSwitcherEnabled ? settings.windowSwitcherHotKey : nil
+        HotKeyCenter.shared.register(id: 30, combo: switcherCombo) { [weak self] in
+            if let switcherCombo { self?.windowSwitcher.advance(backwards: false, combo: switcherCombo) }
+        }
+        HotKeyCenter.shared.register(id: 31, combo: switcherCombo?.withShift) { [weak self] in
+            if let switcherCombo { self?.windowSwitcher.advance(backwards: true, combo: switcherCombo) }
         }
     }
 }

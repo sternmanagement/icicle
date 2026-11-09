@@ -66,6 +66,9 @@ final class AppSettings: ObservableObject {
     @Published var clipboardAutoPaste: Bool { didSet { defaults.set(clipboardAutoPaste, forKey: Key.clipboardAutoPaste) } }
     @Published var clipboardHotKey: KeyCombo? { didSet { save(clipboardHotKey, forKey: Key.clipboardHotKey) } }
 
+    @Published var windowSwitcherEnabled: Bool { didSet { defaults.set(windowSwitcherEnabled, forKey: Key.windowSwitcherEnabled) } }
+    @Published var windowSwitcherHotKey: KeyCombo? { didSet { save(windowSwitcherHotKey, forKey: Key.windowSwitcherHotKey) } }
+
     var hasCompletedOnboarding: Bool {
         get { defaults.bool(forKey: Key.hasCompletedOnboarding) }
         set { defaults.set(newValue, forKey: Key.hasCompletedOnboarding) }
@@ -92,6 +95,8 @@ final class AppSettings: ObservableObject {
         static let clipboardEnabled = "clipboardEnabled"
         static let clipboardAutoPaste = "clipboardAutoPaste"
         static let clipboardHotKey = "clipboardHotKey"
+        static let windowSwitcherEnabled = "windowSwitcherEnabled"
+        static let windowSwitcherHotKey = "windowSwitcherHotKey"
     }
 
     private init() {
@@ -109,6 +114,7 @@ final class AppSettings: ObservableObject {
             Key.snapGap: 8.0,
             Key.clipboardEnabled: true,
             Key.clipboardAutoPaste: true,
+            Key.windowSwitcherEnabled: false,
         ])
 
         autoRehide = defaults.bool(forKey: Key.autoRehide)
@@ -130,6 +136,8 @@ final class AppSettings: ObservableObject {
         clipboardEnabled = defaults.bool(forKey: Key.clipboardEnabled)
         clipboardAutoPaste = defaults.bool(forKey: Key.clipboardAutoPaste)
         clipboardHotKey = Self.load(Key.clipboardHotKey, from: defaults, fallback: .defaultClipboard)
+        windowSwitcherEnabled = defaults.bool(forKey: Key.windowSwitcherEnabled)
+        windowSwitcherHotKey = Self.load(Key.windowSwitcherHotKey, from: defaults, fallback: .defaultWindowSwitcher)
     }
 
     // Empty data marks a shortcut the user deliberately cleared, so it doesn't fall back to the default.

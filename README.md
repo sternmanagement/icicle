@@ -9,6 +9,7 @@ A macOS menu bar manager with Windows 11-style window snapping. Inspired by [Ice
 - **Show on click or hover** over empty menu bar space, with automatic rehiding.
 - **Snap Layouts** — drag a window into the menu bar to pick from 8 layouts; drag to edges or corners for halves and quarters.
 - **Clipboard history** — ⌘⇧V opens your last 50 copies (text and images); search, pick, and it pastes. Kept in memory only.
+- **Window switcher** — hold ⌥ and tap Tab to pick any window, minimized ones included (off by default).
 - **Global hotkeys** — ⌃⌥⌘I toggles hidden icons; ⌃⌥← / ⌃⌥→ / ⌃⌥↩ snap the front window.
 
 ## Build
