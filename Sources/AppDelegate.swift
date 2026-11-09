@@ -11,6 +11,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         manager = MenuBarManager()
         manager.openSettings = { [weak self] tab in self?.settingsWindow.show(tab: tab) }
         manager.snapFrontWindow = { [weak self] zone in self?.snapper.snapFocusedWindow(to: zone) }
+        settingsWindow.itemsModel.manager = manager
         settingsWindow.showAllItems = { [weak self] in self?.manager.showHidden(includingAlwaysHidden: true) }
         snapper.start()
         manager.start()

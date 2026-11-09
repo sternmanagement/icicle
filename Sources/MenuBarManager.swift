@@ -107,6 +107,7 @@ final class MenuBarManager: NSObject {
     }
 
     func hideAll() {
+        guard !isArranging else { return }
         rehideTimer?.invalidate()
         isHiddenShown = false
         isAlwaysHiddenShown = false
@@ -114,10 +115,53 @@ final class MenuBarManager: NSObject {
         updateLayout()
     }
 
+    // MARK: - Arranging other apps' items
+
+    /// While true, every section is shown with visible dividers so items can be dragged across them.
+    private var isArranging = false
+
+    func beginArranging() {
+        rehideTimer?.invalidate()
+        isArranging = true
+        isHiddenShown = true
+        isAlwaysHiddenShown = true
+        revealedByHover = false
+        updateLayout()
+    }
+
+    func endArranging() {
+        isArranging = false
+        hideAll()
+    }
+
+    func dividerFrames() -> DividerFrames {
+        assignRoles()
+        var frames = DividerFrames(hidden: layoutFrame(of: hiddenDivider))
+        if let ah = alwaysHiddenDivider, isOrdered(left: ah, right: hiddenDivider) {
+            frames.alwaysHidden = layoutFrame(of: ah)
+        }
+        return frames
+    }
+
     // MARK: - Layout
 
+    /// macOS 27 draws the menu bar itself and no longer lets an oversized item push others off screen.
+    /// Items that don't fit go into its overflow menu instead, so a divider exactly as wide as the free
+    /// space to its left crowds everything beyond it into overflow. Older systems use the huge length.
+    private static let usesOverflowHiding = ProcessInfo.processInfo.operatingSystemVersion.majorVersion >= 27
+
+    private var collapsedItems = Set<ObjectIdentifier>()
+    /// Where each divider sat when last expanded. A collapsed divider's live frame says nothing useful.
+    private var expandedFrames: [ObjectIdentifier: CGRect] = [:]
+
+    private func layoutFrame(of item: NSStatusItem) -> CGRect? {
+        let id = ObjectIdentifier(item)
+        if collapsedItems.contains(id), let frame = expandedFrames[id] { return frame }
+        return item.button?.window?.frame
+    }
+
     private func assignRoles() {
-        guard let a = itemA.button?.window?.frame, let b = itemB.button?.window?.frame else { return }
+        guard let a = layoutFrame(of: itemA), let b = layoutFrame(of: itemB) else { return }
         iconIsA = a.minX >= b.minX
     }
 
@@ -145,14 +189,27 @@ final class MenuBarManager: NSObject {
             let ahCanCollapse = isOrdered(left: ah, right: hiddenDivider)
             if (isHiddenShown && isAlwaysHiddenShown) || !ahCanCollapse {
                 expand(ah, dimmed: true)
+            } else if Self.usesOverflowHiding && !isHiddenShown {
+                // Already crowded out by the hidden divider; a wide blank item would only clutter the overflow menu.
+                markCollapsed(ah)
+                ah.button?.image = nil
+                ah.length = 0
+            } else if Self.usesOverflowHiding && expandedFrames[ObjectIdentifier(ah)] == nil {
+                // Its width depends on where it sits, so lay it out once before collapsing it.
+                expand(ah, dimmed: true)
+                DispatchQueue.main.asyncAfter(deadline: .now() + Self.settleDelay * 2) { [weak self] in self?.updateLayout() }
             } else {
                 collapse(ah)
             }
         }
     }
 
+    private static let settleDelay: TimeInterval = 0.25
+
     private func expand(_ item: NSStatusItem, dimmed: Bool) {
-        if settings.showSectionDividers {
+        let id = ObjectIdentifier(item)
+        collapsedItems.remove(id)
+        if settings.showSectionDividers || isArranging {
             item.length = NSStatusItem.variableLength
             item.button?.image = Self.dividerImage
             item.button?.appearsDisabled = dimmed
@@ -160,11 +217,37 @@ final class MenuBarManager: NSObject {
             item.button?.image = nil
             item.length = 0
         }
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.settleDelay) { [weak self] in
+            guard let self, !self.collapsedItems.contains(id), let frame = item.button?.window?.frame else { return }
+            self.expandedFrames[id] = frame
+        }
     }
 
     private func collapse(_ item: NSStatusItem) {
+        markCollapsed(item)
         item.button?.image = nil
-        item.length = Self.collapsedLength
+        item.length = Self.usesOverflowHiding ? overflowLength(for: item) : Self.collapsedLength
+    }
+
+    private func markCollapsed(_ item: NSStatusItem) {
+        let id = ObjectIdentifier(item)
+        if !collapsedItems.contains(id), let frame = item.button?.window?.frame { expandedFrames[id] = frame }
+        collapsedItems.insert(id)
+    }
+
+    /// Fills the menu bar from the divider's right edge back to where status items stop.
+    /// Much wider than that and macOS 27 stops honouring the length, so everything shows again.
+    private func overflowLength(for item: NSStatusItem) -> CGFloat {
+        guard let frame = expandedFrames[ObjectIdentifier(item)] else { return Self.collapsedLength }
+        return max(frame.width, frame.maxX - statusItemsLeftLimit())
+    }
+
+    /// The notch's right edge, or the end of the frontmost app's menus on displays without one.
+    private func statusItemsLeftLimit() -> CGFloat {
+        let screen = iconItem.button?.window?.screen ?? NSScreen.main
+        if let notchRight = screen?.auxiliaryTopRightArea { return notchRight.minX }
+        if let menusEnd = AccessibilityAccess.frontmostAppMenusMaxX() { return menusEnd + 8 }
+        return screen?.frame.minX ?? 0
     }
 
     private static let dividerImage: NSImage? = {
@@ -178,7 +261,7 @@ final class MenuBarManager: NSObject {
     /// Compares left edges. A collapsed divider's window keeps its on-screen origin and reports its huge
     /// width extending rightward, so right edges can't be trusted; left edges keep the true order either way.
     private func isOrdered(left: NSStatusItem, right: NSStatusItem) -> Bool {
-        guard let l = left.button?.window?.frame, let r = right.button?.window?.frame else { return true }
+        guard let l = layoutFrame(of: left), let r = layoutFrame(of: right) else { return true }
         return l.minX < r.minX
     }
 
@@ -359,7 +442,7 @@ final class MenuBarManager: NSObject {
 
     private func scheduleRehide() {
         rehideTimer?.invalidate()
-        guard settings.autoRehide, settings.rehideStrategy == .timed, !revealedByHover else { return }
+        guard settings.autoRehide, settings.rehideStrategy == .timed, !revealedByHover, !isArranging else { return }
         rehideTimer = Timer.scheduledTimer(withTimeInterval: settings.rehideDelay, repeats: false) { [weak self] _ in
             self?.attemptRehide()
         }
@@ -378,6 +461,10 @@ final class MenuBarManager: NSObject {
     }
 
     @objc private func frontmostAppChanged(_ note: Notification) {
+        // Without a notch, the room left for status items depends on how long the new app's menus are.
+        if Self.usesOverflowHiding, !isHiddenShown, NSScreen.main?.auxiliaryTopRightArea == nil {
+            DispatchQueue.main.asyncAfter(deadline: .now() + Self.settleDelay) { [weak self] in self?.updateLayout() }
+        }
         guard settings.autoRehide, settings.rehideStrategy == .focusedApp,
               isHiddenShown, !revealedByHover else { return }
         if let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication,

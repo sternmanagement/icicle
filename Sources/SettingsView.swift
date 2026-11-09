@@ -6,6 +6,7 @@ import SwiftUI
 struct SettingsView: View {
     @ObservedObject var settings: AppSettings
     @ObservedObject var navigation: SettingsNavigation
+    let itemsModel: MenuBarItemsModel
     let showAllItems: () -> Void
 
     var body: some View {
@@ -43,7 +44,7 @@ struct SettingsView: View {
     private func detail(for tab: SettingsTab) -> some View {
         switch tab {
         case .general: GeneralPane(settings: settings)
-        case .layout: LayoutPane(settings: settings, showAllItems: showAllItems)
+        case .layout: LayoutPane(settings: settings, items: itemsModel, showAllItems: showAllItems)
         case .snapping: SnappingPane(settings: settings)
         case .hotkeys: HotkeysPane(settings: settings)
         case .about: AboutPane()
@@ -259,40 +260,183 @@ private struct IconStylePicker: View {
 
 private struct LayoutPane: View {
     @ObservedObject var settings: AppSettings
+    @ObservedObject var items: MenuBarItemsModel
     let showAllItems: () -> Void
+    @State private var trusted = AccessibilityAccess.isTrusted
+    private let poll = Timer.publish(every: 3, on: .main, in: .common).autoconnect()
+
+    private var sections: [MenuBarSection] {
+        settings.alwaysHiddenEnabled ? [.visible, .hidden, .alwaysHidden] : [.visible, .hidden]
+    }
 
     var body: some View {
         Form {
-            Section {
-                VStack(alignment: .leading, spacing: 16) {
-                    MenuBarMock(alwaysHiddenEnabled: settings.alwaysHiddenEnabled)
-                    VStack(alignment: .leading, spacing: 8) {
-                        Step(number: 1, text: "Click **Show All Items** so every icon is on screen.")
-                        Step(number: 2, text: "Hold **⌘ Command** and drag icons in the menu bar. Anything left of the **‹** divider gets hidden.")
-                        Step(number: 3, text: "Click the **❄** icon to hide or show that section.")
-                        if settings.alwaysHiddenEnabled {
-                            Step(number: 4, text: "Icons left of the dimmed **‹** stay hidden until you **⌥-click** the ❄ icon.")
+            if trusted {
+                ForEach(sections) { section in
+                    Section {
+                        let entries = items.entries.filter { $0.section == section && !$0.item.isInSystemOverflow }
+                        if entries.isEmpty {
+                            Text(section == .visible ? "No other icons are visible." : "Nothing here yet.")
+                                .font(.callout)
+                                .foregroundStyle(.secondary)
+                        }
+                        ForEach(entries) { entry in
+                            MenuBarItemRow(entry: entry, sections: sections, items: items)
+                        }
+                    } header: {
+                        SectionHeader(section: section)
+                    } footer: {
+                        if section == sections.last {
+                            VStack(alignment: .leading, spacing: 6) {
+                                if let failure = items.failure {
+                                    Label(failure, systemImage: "exclamationmark.triangle.fill")
+                                        .foregroundStyle(.orange)
+                                }
+                                Text("Pick a section for any icon. Icicle ⌘-drags it there for you, so the pointer jumps for a moment. Every icon stays shown while this page is open.")
+                                    .foregroundStyle(.secondary)
+                            }
+                            .font(.caption)
+                            .fixedSize(horizontal: false, vertical: true)
                         }
                     }
-                    Button(action: showAllItems) {
-                        Label("Show All Items", systemImage: "eye")
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.large)
                 }
-                .padding(.vertical, 6)
+                let overflow = items.entries.filter { $0.item.isInSystemOverflow }
+                if !overflow.isEmpty {
+                    Section {
+                        ForEach(overflow) { entry in
+                            MenuBarItemRow(entry: entry, sections: [], items: items)
+                        }
+                    } header: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "chevron.right.2")
+                            Text("No Room").fontWeight(.semibold)
+                            Text("· In the macOS overflow menu").foregroundStyle(.secondary)
+                        }
+                    } footer: {
+                        Text("The menu bar is full (the camera notch takes space), so macOS tucked these away. Hide a few other icons to make room for them.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+            } else {
+                Section {
+                    AccessibilityRow(reason: "Lets Icicle list your menu bar icons and move them between sections.")
+                }
             }
 
             Section {
                 Toggle("Always-hidden section", isOn: $settings.alwaysHiddenEnabled)
             } footer: {
-                Text("Adds a second divider. Icons left of it stay hidden even when you show hidden items.")
+                Text("Adds a second divider. Icons in it stay hidden until you ⌥-click the ❄ icon.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+            }
+
+            Section {
+                DisclosureGroup("Arrange by hand") {
+                    VStack(alignment: .leading, spacing: 16) {
+                        MenuBarMock(alwaysHiddenEnabled: settings.alwaysHiddenEnabled)
+                        VStack(alignment: .leading, spacing: 8) {
+                            Step(number: 1, text: "Click **Show All Items** so every icon is on screen.")
+                            Step(number: 2, text: "Hold **⌘ Command** and drag icons in the menu bar. Anything left of the **‹** divider gets hidden.")
+                            Step(number: 3, text: "Click the **❄** icon to hide or show that section.")
+                        }
+                        Button(action: showAllItems) {
+                            Label("Show All Items", systemImage: "eye")
+                        }
+                    }
+                    .padding(.vertical, 8)
+                }
             }
         }
         .formStyle(.grouped)
         .animation(.default, value: settings.alwaysHiddenEnabled)
+        .onAppear { if trusted { items.startEditing() } }
+        .onDisappear { items.stopEditing() }
+        .onReceive(poll) { _ in
+            if !trusted, AccessibilityAccess.isTrusted { items.startEditing() }
+            trusted = AccessibilityAccess.isTrusted
+            if trusted { items.refresh() }
+        }
+    }
+}
+
+private struct SectionHeader: View {
+    let section: MenuBarSection
+
+    private var detail: String {
+        switch section {
+        case .visible: return "Always in the menu bar"
+        case .hidden: return "Shown when you click ❄"
+        case .alwaysHidden: return "Shown when you ⌥-click ❄"
+        }
+    }
+
+    private var symbol: String {
+        switch section {
+        case .visible: return "eye"
+        case .hidden: return "eye.slash"
+        case .alwaysHidden: return "lock"
+        }
+    }
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Image(systemName: symbol)
+            Text(section.title).fontWeight(.semibold)
+            Text("· \(detail)").foregroundStyle(.secondary)
+        }
+    }
+}
+
+private struct MenuBarItemRow: View {
+    let entry: MenuBarItemsModel.Entry
+    let sections: [MenuBarSection]
+    @ObservedObject var items: MenuBarItemsModel
+
+    var body: some View {
+        let item = entry.item
+        HStack(spacing: 10) {
+            Group {
+                if let icon = item.icon, icon.isTemplate {
+                    Image(nsImage: icon).renderingMode(.template).resizable().aspectRatio(contentMode: .fit)
+                        .padding(2)
+                        .foregroundStyle(.secondary)
+                } else if let icon = item.icon {
+                    Image(nsImage: icon).resizable()
+                } else {
+                    Image(systemName: "app.dashed").resizable().foregroundStyle(.secondary)
+                }
+            }
+            .frame(width: 22, height: 22)
+
+            VStack(alignment: .leading, spacing: 1) {
+                Text(item.title).lineLimit(1)
+                if item.title != item.appName {
+                    Text(item.appName).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                }
+            }
+            Spacer()
+            if items.movingID == entry.id {
+                ProgressView().controlSize(.small)
+            }
+            if sections.isEmpty {
+                EmptyView()
+            } else if item.isMovable {
+                Picker("", selection: Binding(
+                    get: { entry.section },
+                    set: { items.move(entry, to: $0) }
+                )) {
+                    ForEach(sections) { Text($0.title).tag($0) }
+                }
+                .labelsHidden()
+                .fixedSize()
+                .disabled(items.movingID != nil)
+            } else {
+                Text("Fixed by macOS").font(.caption).foregroundStyle(.secondary)
+            }
+        }
     }
 }
 

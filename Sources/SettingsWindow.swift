@@ -53,6 +53,7 @@ final class SettingsNavigation: ObservableObject {
 
 final class SettingsWindowController {
     var showAllItems: (() -> Void)?
+    let itemsModel = MenuBarItemsModel()
 
     private var window: NSWindow?
     private let navigation = SettingsNavigation()
@@ -63,6 +64,7 @@ final class SettingsWindowController {
             let root = SettingsView(
                 settings: .shared,
                 navigation: navigation,
+                itemsModel: itemsModel,
                 showAllItems: { [weak self] in self?.showAllItems?() }
             )
             let hosting = NSHostingController(rootView: root)
@@ -75,9 +77,14 @@ final class SettingsWindowController {
             window.isMovableByWindowBackground = true
             window.isReleasedWhenClosed = false
             window.center()
+            // SwiftUI doesn't report the page disappearing when the window closes, so stop editing here.
+            NotificationCenter.default.addObserver(forName: NSWindow.willCloseNotification, object: window, queue: .main) { [weak self] _ in
+                self?.itemsModel.stopEditing()
+            }
             self.window = window
         }
         NSApp.activate()
         window?.makeKeyAndOrderFront(nil)
+        if tab == .layout, AccessibilityAccess.isTrusted { itemsModel.startEditing() }
     }
 }
