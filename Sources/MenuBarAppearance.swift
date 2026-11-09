@@ -1,0 +1,112 @@
+import AppKit
+import Combine
+import SwiftUI
+
+enum TintStyle: String, CaseIterable, Identifiable {
+    case solid, gradient
+
+    var id: String { rawValue }
+    var title: String { rawValue.capitalized }
+}
+
+/// Paints a colour strip behind the menu bar on every display. The menu bar has been transparent since
+/// macOS 26, so a click-through window just below its level shows through behind the items.
+final class MenuBarAppearance {
+    private let settings = AppSettings.shared
+    private var panels: [NSPanel] = []
+    private var cancellables = Set<AnyCancellable>()
+
+    func start() {
+        settings.objectWillChange
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] in self?.settingsChanged() }
+            .store(in: &cancellables)
+        NotificationCenter.default.addObserver(forName: NSApplication.didChangeScreenParametersNotification,
+                                               object: nil, queue: .main) { [weak self] _ in self?.rebuild() }
+        rebuild()
+    }
+
+    /// Colours update live through the SwiftUI view; panels only need rebuilding when the feature flips.
+    private var builtForEnabled = false
+
+    private func settingsChanged() {
+        if settings.menuBarTintEnabled != builtForEnabled { rebuild() }
+    }
+
+    private func rebuild() {
+        builtForEnabled = settings.menuBarTintEnabled
+        panels.forEach { $0.orderOut(nil) }
+        panels.removeAll()
+        guard settings.menuBarTintEnabled else { return }
+        for screen in NSScreen.screens {
+            let panel = makePanel(for: screen)
+            panel.contentView = NSHostingView(rootView: MenuBarTintView(settings: settings))
+            panel.orderFrontRegardless()
+            panels.append(panel)
+        }
+    }
+
+    private func makePanel(for screen: NSScreen) -> NSPanel {
+        let panel = NSPanel(contentRect: Self.menuBarFrame(of: screen), styleMask: [.borderless, .nonactivatingPanel],
+                            backing: .buffered, defer: false)
+        panel.isOpaque = false
+        panel.backgroundColor = .clear
+        panel.hasShadow = false
+        panel.ignoresMouseEvents = true
+        panel.isReleasedWhenClosed = false
+        panel.hidesOnDeactivate = false
+        panel.level = NSWindow.Level(rawValue: NSWindow.Level.mainMenu.rawValue - 1)
+        panel.collectionBehavior = [.canJoinAllSpaces, .stationary, .ignoresCycle, .fullScreenNone]
+        return panel
+    }
+
+    static func menuBarFrame(of screen: NSScreen) -> CGRect {
+        let fromVisible = screen.frame.maxY - screen.visibleFrame.maxY
+        // An auto-hiding menu bar leaves no gap in visibleFrame; fall back to the notch inset or the usual height.
+        let height = fromVisible > 0 ? fromVisible : (screen.safeAreaInsets.top > 0 ? screen.safeAreaInsets.top : 24)
+        return CGRect(x: screen.frame.minX, y: screen.frame.maxY - height, width: screen.frame.width, height: height)
+    }
+}
+
+private struct MenuBarTintView: View {
+    @ObservedObject var settings: AppSettings
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        let colors = colorScheme == .dark
+            ? [settings.tintDarkStart, settings.tintDarkEnd]
+            : [settings.tintLightStart, settings.tintLightEnd]
+        if settings.menuBarTintStyle == .gradient {
+            LinearGradient(colors: colors.map { Color(hex: $0) }, startPoint: .leading, endPoint: .trailing)
+        } else {
+            Color(hex: colors[0])
+        }
+    }
+}
+
+extension Color {
+    /// "#RRGGBB" or "#RRGGBBAA" in sRGB.
+    init(hex: String) {
+        var value: UInt64 = 0
+        Scanner(string: hex.trimmingCharacters(in: CharacterSet(charactersIn: "#"))).scanHexInt64(&value)
+        let hasAlpha = hex.count > 7
+        let r = Double((value >> (hasAlpha ? 24 : 16)) & 0xFF) / 255
+        let g = Double((value >> (hasAlpha ? 16 : 8)) & 0xFF) / 255
+        let b = Double((value >> (hasAlpha ? 8 : 0)) & 0xFF) / 255
+        let a = hasAlpha ? Double(value & 0xFF) / 255 : 1
+        self.init(.sRGB, red: r, green: g, blue: b, opacity: a)
+    }
+
+    var hexString: String {
+        guard let c = NSColor(self).usingColorSpace(.sRGB) else { return "#000000FF" }
+        let parts = [c.redComponent, c.greenComponent, c.blueComponent, c.alphaComponent]
+        return "#" + parts.map { String(format: "%02X", Int(($0 * 255).rounded())) }.joined()
+    }
+}
+
+extension Binding where Value == String {
+    /// Edits a stored hex string through a ColorPicker.
+    var color: Binding<Color> {
+        Binding<Color>(get: { Color(hex: wrappedValue) }, set: { wrappedValue = $0.hexString })
+    }
+}

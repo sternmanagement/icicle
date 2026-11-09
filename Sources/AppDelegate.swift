@@ -18,7 +18,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         snapper.start()
         manager.start()
         extras.start()
+        appearance.start()
     }
+
+    private let appearance = MenuBarAppearance()
 
     private let extras = Extras()
 

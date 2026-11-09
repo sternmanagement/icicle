@@ -129,3 +129,72 @@ struct WindowsPane: View {
         newName = ""
     }
 }
+
+struct AppearancePane: View {
+    @ObservedObject var settings: AppSettings
+
+    var body: some View {
+        Form {
+            Section {
+                Toggle("Tint the menu bar", isOn: $settings.menuBarTintEnabled)
+                if settings.menuBarTintEnabled {
+                    Picker("Style", selection: $settings.menuBarTintStyle) {
+                        ForEach(TintStyle.allCases) { Text($0.title).tag($0) }
+                    }
+                    .pickerStyle(.segmented)
+                    tintRow("Light mode", start: $settings.tintLightStart, end: $settings.tintLightEnd, scheme: .light)
+                    tintRow("Dark mode", start: $settings.tintDarkStart, end: $settings.tintDarkEnd, scheme: .dark)
+                }
+            } header: {
+                Text("Menu bar tint")
+            } footer: {
+                Text("Pick separate colours for light and dark mode; lower the opacity in the colour picker for a subtler wash. macOS picks the menu bar's text colour from your wallpaper, so very dark or very light tints can make it harder to read.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .formStyle(.grouped)
+        .animation(.default, value: settings.menuBarTintEnabled)
+    }
+
+    private func tintRow(_ title: String, start: Binding<String>, end: Binding<String>, scheme: ColorScheme) -> some View {
+        LabeledContent(title) {
+            HStack(spacing: 10) {
+                TintPreview(colors: settings.menuBarTintStyle == .gradient ? [start.wrappedValue, end.wrappedValue] : [start.wrappedValue],
+                            scheme: scheme)
+                ColorPicker("Start", selection: start.color, supportsOpacity: true).labelsHidden()
+                if settings.menuBarTintStyle == .gradient {
+                    ColorPicker("End", selection: end.color, supportsOpacity: true).labelsHidden()
+                }
+            }
+        }
+    }
+}
+
+/// A sliver of menu bar showing the tint over a wallpaper-ish backdrop.
+private struct TintPreview: View {
+    let colors: [String]
+    let scheme: ColorScheme
+
+    var body: some View {
+        ZStack {
+            LinearGradient(colors: scheme == .dark ? [Color(white: 0.15), Color(white: 0.3)] : [Color(white: 0.85), Color(white: 0.97)],
+                           startPoint: .topLeading, endPoint: .bottomTrailing)
+            LinearGradient(colors: colors.map { Color(hex: $0) }, startPoint: .leading, endPoint: .trailing)
+            HStack(spacing: 6) {
+                Image(systemName: "apple.logo")
+                Text("Finder").fontWeight(.semibold)
+                Spacer()
+                Image(systemName: "wifi")
+                Text("9:41")
+            }
+            .font(.system(size: 9))
+            .foregroundStyle(scheme == .dark ? .white : .black)
+            .padding(.horizontal, 8)
+        }
+        .frame(width: 170, height: 20)
+        .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 5, style: .continuous).strokeBorder(Color.primary.opacity(0.15)))
+    }
+}

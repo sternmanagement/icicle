@@ -71,6 +71,13 @@ final class AppSettings: ObservableObject {
     @Published var workspacesEnabled: Bool { didSet { defaults.set(workspacesEnabled, forKey: Key.workspacesEnabled) } }
     @Published var workspaceHotKeysEnabled: Bool { didSet { defaults.set(workspaceHotKeysEnabled, forKey: Key.workspaceHotKeysEnabled) } }
 
+    @Published var menuBarTintEnabled: Bool { didSet { defaults.set(menuBarTintEnabled, forKey: Key.menuBarTintEnabled) } }
+    @Published var menuBarTintStyle: TintStyle { didSet { defaults.set(menuBarTintStyle.rawValue, forKey: Key.menuBarTintStyle) } }
+    @Published var tintLightStart: String { didSet { defaults.set(tintLightStart, forKey: Key.tintLightStart) } }
+    @Published var tintLightEnd: String { didSet { defaults.set(tintLightEnd, forKey: Key.tintLightEnd) } }
+    @Published var tintDarkStart: String { didSet { defaults.set(tintDarkStart, forKey: Key.tintDarkStart) } }
+    @Published var tintDarkEnd: String { didSet { defaults.set(tintDarkEnd, forKey: Key.tintDarkEnd) } }
+
     var hasCompletedOnboarding: Bool {
         get { defaults.bool(forKey: Key.hasCompletedOnboarding) }
         set { defaults.set(newValue, forKey: Key.hasCompletedOnboarding) }
@@ -101,6 +108,12 @@ final class AppSettings: ObservableObject {
         static let windowSwitcherHotKey = "windowSwitcherHotKey"
         static let workspacesEnabled = "workspacesEnabled"
         static let workspaceHotKeysEnabled = "workspaceHotKeysEnabled"
+        static let menuBarTintEnabled = "menuBarTintEnabled"
+        static let menuBarTintStyle = "menuBarTintStyle"
+        static let tintLightStart = "tintLightStart"
+        static let tintLightEnd = "tintLightEnd"
+        static let tintDarkStart = "tintDarkStart"
+        static let tintDarkEnd = "tintDarkEnd"
     }
 
     private init() {
@@ -121,6 +134,12 @@ final class AppSettings: ObservableObject {
             Key.windowSwitcherEnabled: false,
             Key.workspacesEnabled: false,
             Key.workspaceHotKeysEnabled: true,
+            Key.menuBarTintEnabled: false,
+            Key.menuBarTintStyle: TintStyle.gradient.rawValue,
+            Key.tintLightStart: "#8EC5FFB3",
+            Key.tintLightEnd: "#D3B5FFB3",
+            Key.tintDarkStart: "#1E3A8ACC",
+            Key.tintDarkEnd: "#5B21B6CC",
         ])
 
         autoRehide = defaults.bool(forKey: Key.autoRehide)
@@ -146,6 +165,12 @@ final class AppSettings: ObservableObject {
         windowSwitcherHotKey = Self.load(Key.windowSwitcherHotKey, from: defaults, fallback: .defaultWindowSwitcher)
         workspacesEnabled = defaults.bool(forKey: Key.workspacesEnabled)
         workspaceHotKeysEnabled = defaults.bool(forKey: Key.workspaceHotKeysEnabled)
+        menuBarTintEnabled = defaults.bool(forKey: Key.menuBarTintEnabled)
+        menuBarTintStyle = TintStyle(rawValue: defaults.string(forKey: Key.menuBarTintStyle) ?? "") ?? .gradient
+        tintLightStart = defaults.string(forKey: Key.tintLightStart) ?? ""
+        tintLightEnd = defaults.string(forKey: Key.tintLightEnd) ?? ""
+        tintDarkStart = defaults.string(forKey: Key.tintDarkStart) ?? ""
+        tintDarkEnd = defaults.string(forKey: Key.tintDarkEnd) ?? ""
     }
 
     // Empty data marks a shortcut the user deliberately cleared, so it doesn't fall back to the default.

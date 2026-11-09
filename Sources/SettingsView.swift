@@ -48,6 +48,7 @@ struct SettingsView: View {
         case .snapping: SnappingPane(settings: settings)
         case .windows: WindowsPane(settings: settings)
         case .clipboard: ClipboardPane(settings: settings, history: .shared)
+        case .appearance: AppearancePane(settings: settings)
         case .hotkeys: HotkeysPane(settings: settings)
         case .about: AboutPane()
         }

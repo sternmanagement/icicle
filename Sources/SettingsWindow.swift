@@ -2,7 +2,7 @@ import AppKit
 import SwiftUI
 
 enum SettingsTab: String, CaseIterable, Identifiable, Hashable {
-    case general, layout, snapping, windows, clipboard, hotkeys, about
+    case general, layout, snapping, windows, clipboard, appearance, hotkeys, about
 
     var id: String { rawValue }
 
@@ -13,6 +13,7 @@ enum SettingsTab: String, CaseIterable, Identifiable, Hashable {
         case .snapping: return "Window Snapping"
         case .windows: return "Windows"
         case .clipboard: return "Clipboard"
+        case .appearance: return "Appearance"
         case .hotkeys: return "Hotkeys"
         case .about: return "About"
         }
@@ -25,6 +26,7 @@ enum SettingsTab: String, CaseIterable, Identifiable, Hashable {
         case .snapping: return "Drag a window to the top of the screen to pick a layout."
         case .windows: return "Switch between windows and save layouts."
         case .clipboard: return "Everything you've copied, one shortcut away."
+        case .appearance: return "Give the menu bar some colour."
         case .hotkeys: return "Keyboard shortcuts that work in any app."
         case .about: return "Icicle, a tidy menu bar for your Mac."
         }
@@ -37,6 +39,7 @@ enum SettingsTab: String, CaseIterable, Identifiable, Hashable {
         case .snapping: return "rectangle.split.2x2.fill"
         case .windows: return "macwindow.on.rectangle"
         case .clipboard: return "doc.on.clipboard.fill"
+        case .appearance: return "paintbrush.fill"
         case .hotkeys: return "command"
         case .about: return "snowflake"
         }
@@ -49,6 +52,7 @@ enum SettingsTab: String, CaseIterable, Identifiable, Hashable {
         case .snapping: return [Color(red: 0.70, green: 0.48, blue: 1.0), Color(red: 0.47, green: 0.27, blue: 0.92)]
         case .windows: return [Color(red: 1.0, green: 0.45, blue: 0.55), Color(red: 0.90, green: 0.22, blue: 0.40)]
         case .clipboard: return [Color(red: 0.36, green: 0.85, blue: 0.62), Color(red: 0.10, green: 0.62, blue: 0.45)]
+        case .appearance: return [Color(red: 1.0, green: 0.78, blue: 0.30), Color(red: 0.98, green: 0.55, blue: 0.12)]
         case .hotkeys: return [Color(red: 1.0, green: 0.62, blue: 0.30), Color(red: 0.96, green: 0.40, blue: 0.20)]
         case .about: return [Color(red: 0.50, green: 0.85, blue: 1.0), Color(red: 0.15, green: 0.50, blue: 0.90)]
         }
