@@ -78,10 +78,17 @@ final class AppSettings: ObservableObject {
     @Published var tintDarkStart: String { didSet { defaults.set(tintDarkStart, forKey: Key.tintDarkStart) } }
     @Published var tintDarkEnd: String { didSet { defaults.set(tintDarkEnd, forKey: Key.tintDarkEnd) } }
     @Published var hideNotch: Bool { didSet { defaults.set(hideNotch, forKey: Key.hideNotch) } }
+    @Published var menuBarShape: MenuBarShape { didSet { defaults.set(menuBarShape.rawValue, forKey: Key.menuBarShape) } }
+    @Published var menuBarBorder: Bool { didSet { defaults.set(menuBarBorder, forKey: Key.menuBarBorder) } }
+    @Published var menuBarShadow: Bool { didSet { defaults.set(menuBarShadow, forKey: Key.menuBarShadow) } }
+    @Published var roundedCornersEnabled: Bool { didSet { defaults.set(roundedCornersEnabled, forKey: Key.roundedCornersEnabled) } }
+    @Published var roundedCornerRadius: Double { didSet { defaults.set(roundedCornerRadius, forKey: Key.roundedCornerRadius) } }
 
     @Published var focusBorderEnabled: Bool { didSet { defaults.set(focusBorderEnabled, forKey: Key.focusBorderEnabled) } }
     @Published var focusBorderColor: String { didSet { defaults.set(focusBorderColor, forKey: Key.focusBorderColor) } }
     @Published var focusBorderWidth: Double { didSet { defaults.set(focusBorderWidth, forKey: Key.focusBorderWidth) } }
+    @Published var dimEnabled: Bool { didSet { defaults.set(dimEnabled, forKey: Key.dimEnabled) } }
+    @Published var dimAmount: Double { didSet { defaults.set(dimAmount, forKey: Key.dimAmount) } }
 
     var hasCompletedOnboarding: Bool {
         get { defaults.bool(forKey: Key.hasCompletedOnboarding) }
@@ -123,6 +130,13 @@ final class AppSettings: ObservableObject {
         static let focusBorderEnabled = "focusBorderEnabled"
         static let focusBorderColor = "focusBorderColor"
         static let focusBorderWidth = "focusBorderWidth"
+        static let menuBarShape = "menuBarShape"
+        static let menuBarBorder = "menuBarBorder"
+        static let menuBarShadow = "menuBarShadow"
+        static let roundedCornersEnabled = "roundedCornersEnabled"
+        static let roundedCornerRadius = "roundedCornerRadius"
+        static let dimEnabled = "dimEnabled"
+        static let dimAmount = "dimAmount"
     }
 
     private init() {
@@ -153,6 +167,13 @@ final class AppSettings: ObservableObject {
             Key.focusBorderEnabled: false,
             Key.focusBorderColor: "#3B82F6E6",
             Key.focusBorderWidth: 4.0,
+            Key.menuBarShape: MenuBarShape.full.rawValue,
+            Key.menuBarBorder: false,
+            Key.menuBarShadow: false,
+            Key.roundedCornersEnabled: false,
+            Key.roundedCornerRadius: 12.0,
+            Key.dimEnabled: false,
+            Key.dimAmount: 0.3,
         ])
 
         autoRehide = defaults.bool(forKey: Key.autoRehide)
@@ -188,6 +209,13 @@ final class AppSettings: ObservableObject {
         focusBorderEnabled = defaults.bool(forKey: Key.focusBorderEnabled)
         focusBorderColor = defaults.string(forKey: Key.focusBorderColor) ?? ""
         focusBorderWidth = defaults.double(forKey: Key.focusBorderWidth)
+        menuBarShape = MenuBarShape(rawValue: defaults.string(forKey: Key.menuBarShape) ?? "") ?? .full
+        menuBarBorder = defaults.bool(forKey: Key.menuBarBorder)
+        menuBarShadow = defaults.bool(forKey: Key.menuBarShadow)
+        roundedCornersEnabled = defaults.bool(forKey: Key.roundedCornersEnabled)
+        roundedCornerRadius = defaults.double(forKey: Key.roundedCornerRadius)
+        dimEnabled = defaults.bool(forKey: Key.dimEnabled)
+        dimAmount = defaults.double(forKey: Key.dimAmount)
     }
 
     // Empty data marks a shortcut the user deliberately cleared, so it doesn't fall back to the default.

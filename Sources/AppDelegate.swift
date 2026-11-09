@@ -19,12 +19,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         snapper.start()
         manager.start()
         extras.start()
+        appearance.ownIconMinX = { [weak self] in self?.manager.iconFrame?.minX }
+        appearance.hiddenItemsBoundary = { [weak self] in self?.manager.hiddenItemsBoundary }
         appearance.start()
         focusBorder.start()
+        screenCorners.start()
+        dimmer.start()
     }
 
     private let appearance = MenuBarAppearance()
     private let focusBorder = FocusBorder()
+    private let screenCorners = ScreenCorners()
+    private let dimmer = BackgroundDimmer()
 
     private let extras = Extras()
 

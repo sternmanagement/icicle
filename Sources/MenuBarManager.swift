@@ -33,7 +33,17 @@ final class MenuBarManager: NSObject {
     private let itemB: NSStatusItem
     private var iconIsA = true
     private var iconItem: NSStatusItem { iconIsA ? itemA : itemB }
+
+    /// Where the ❄ icon sits on screen.
+    var iconFrame: CGRect? { iconItem.button?.window?.frame }
     private var hiddenDivider: NSStatusItem { iconIsA ? itemB : itemA }
+
+    /// While the hidden section is collapsed, other apps' icons left of this are hidden, even though
+    /// macOS 27 still reports menu bar positions for them.
+    var hiddenItemsBoundary: CGFloat? {
+        guard !isHiddenShown, let frame = layoutFrame(of: hiddenDivider) else { return nil }
+        return frame.maxX
+    }
     private var alwaysHiddenDivider: NSStatusItem?
 
     private(set) var isHiddenShown = true

@@ -89,6 +89,23 @@ enum MenuBarItemScanner {
         return items.sorted { $0.frame.minX < $1.frame.minX }
     }
 
+    /// Just where each app's status items sit in the menu bar (not the overflow), cheap enough to poll.
+    /// `isOverflowButton` marks macOS's own » button, which shows whenever icons are in the overflow.
+    static func visibleFrames(of pids: [pid_t]) -> [(frame: CGRect, isOverflowButton: Bool)] {
+        pids.flatMap { pid -> [(frame: CGRect, isOverflowButton: Bool)] in
+            let axApp = AXUIElementCreateApplication(pid)
+            AXUIElementSetMessagingTimeout(axApp, 0.1)
+            guard let extras = axApp.element("AXExtrasMenuBar") else { return [] }
+            let isAgent = NSRunningApplication(processIdentifier: pid)?.bundleIdentifier == "com.apple.MenuBarAgent"
+            return extras.elements(kAXChildrenAttribute).compactMap { child in
+                guard let frame = child.axFrame, frame.width > 0, frame.minY < 60 else { return nil }
+                let leaf = child.elements(kAXChildrenAttribute).first ?? child
+                let identifier = leaf.string(kAXIdentifierAttribute) ?? child.string(kAXIdentifierAttribute) ?? ""
+                return (frame, isAgent && identifier.isEmpty)
+            }
+        }
+    }
+
     private static func image(of element: AXUIElement) -> NSImage? {
         guard let value = element.value("AXImageData") else { return nil }
         if let data = value as? Data, let image = NSImage(data: data) { return image }

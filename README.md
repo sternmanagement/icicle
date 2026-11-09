@@ -11,8 +11,11 @@ A macOS menu bar manager with Windows 11-style window snapping. Inspired by [Ice
 - **Clipboard history** — ⌘⇧V opens your last 50 copies (text and images); search, pick, and it pastes. Kept in memory only.
 - **Window switcher** — hold ⌥ and tap Tab to pick any window, minimized ones included (off by default).
 - **Saved workspaces** — save every app's window positions under a name; restore from the ❄ menu or ⌃⌥1–9 (off by default).
-- **Menu bar tint** — a solid colour or gradient behind the menu bar, with separate light and dark mode colours (off by default).
+- **Menu bar tint** — a solid colour, a gradient, or colours picked from your wallpaper, with separate light and dark mode colours (off by default).
+- **Menu bar shape** — keep it full width, float it as a rounded pill, or split it into two pills (app menus and status icons) that resize as you switch apps; frosted glass when there's no tint. Optional border and shadow.
 - **Hide the notch** — a black menu bar on notched displays so the notch disappears (off by default).
+- **Rounded screen corners** — soft corners on every display, over everything (off by default).
+- **Dim background windows** — fades everything except the window you're using (off by default).
 - **Focus border** — an optional coloured outline around the window you're working in.
 - **Global hotkeys** — ⌃⌥⌘I toggles hidden icons; ⌃⌥← / ⌃⌥→ / ⌃⌥↩ snap the front window.
 

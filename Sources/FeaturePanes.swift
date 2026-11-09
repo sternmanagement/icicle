@@ -1,4 +1,5 @@
 import AppKit
+import ImageIO
 import SwiftUI
 
 // Settings panes for the extras: clipboard, windows and appearance.
@@ -162,17 +163,41 @@ struct AppearancePane: View {
     var body: some View {
         Form {
             Section {
+                MenuBarPreview(settings: settings)
+                    .listRowInsets(EdgeInsets(top: 8, leading: 8, bottom: 8, trailing: 8))
+                Picker("Shape", selection: $settings.menuBarShape) {
+                    ForEach(MenuBarShape.allCases) { Text($0.title).tag($0) }
+                }
+                .pickerStyle(.segmented)
+                Toggle("Border", isOn: $settings.menuBarBorder)
+                Toggle("Shadow", isOn: $settings.menuBarShadow)
+            } header: {
+                Text("Menu bar")
+            } footer: {
+                Text("Floating draws the menu bar as a rounded pill; Split gives the app menus and the status icons a pill each, resizing as you switch apps. Without a tint, the pills are frosted glass. Split needs Accessibility access to see where the menus end.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Section {
                 Toggle("Tint the menu bar", isOn: $settings.menuBarTintEnabled)
                 if settings.menuBarTintEnabled {
                     Picker("Style", selection: $settings.menuBarTintStyle) {
                         ForEach(TintStyle.allCases) { Text($0.title).tag($0) }
                     }
                     .pickerStyle(.segmented)
-                    tintRow("Light mode", start: $settings.tintLightStart, end: $settings.tintLightEnd, scheme: .light)
-                    tintRow("Dark mode", start: $settings.tintDarkStart, end: $settings.tintDarkEnd, scheme: .dark)
+                    if settings.menuBarTintStyle == .wallpaper {
+                        Text("Colours are picked from the top of each display's wallpaper and follow it when it changes.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    } else {
+                        tintRow("Light mode", start: $settings.tintLightStart, end: $settings.tintLightEnd, scheme: .light)
+                        tintRow("Dark mode", start: $settings.tintDarkStart, end: $settings.tintDarkEnd, scheme: .dark)
+                    }
                 }
             } header: {
-                Text("Menu bar tint")
+                Text("Tint")
             } footer: {
                 Text("Pick separate colours for light and dark mode; lower the opacity in the colour picker for a subtler wash. macOS picks the menu bar's text colour from your wallpaper, so very dark or very light tints can make it harder to read.")
                     .font(.caption)
@@ -187,8 +212,26 @@ struct AppearancePane: View {
                 Text("Notch")
             } footer: {
                 Text(NSScreen.screens.contains(where: MenuBarAppearance.hasNotch)
-                     ? "Paints the menu bar black on displays with a camera notch so the notch blends in. Takes priority over the tint there. Reads best in Dark Mode, where the menu bar text is white."
+                     ? "Paints the menu bar black on displays with a camera notch so the notch blends in. Takes priority over the shape and tint there. Reads best in Dark Mode, where the menu bar text is white."
                      : "None of your displays has a camera notch.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Section {
+                Toggle("Round the screen corners", isOn: $settings.roundedCornersEnabled)
+                if settings.roundedCornersEnabled {
+                    sliderRow("Radius", value: $settings.roundedCornerRadius, in: 6...28, step: 1) { "\(Int($0)) pt" }
+                }
+                Toggle("Dim windows behind the one you're using", isOn: $settings.dimEnabled)
+                if settings.dimEnabled {
+                    sliderRow("Amount", value: $settings.dimAmount, in: 0.1...0.7, step: 0.05) { "\(Int(($0 * 100).rounded()))%" }
+                }
+            } header: {
+                Text("Desktop")
+            } footer: {
+                Text("Rounded corners give every display soft corners like an iPhone's, over everything including full-screen apps. Dimming fades out everything but the window you're using so it stands out; click anywhere to switch as usual. Dimming needs Accessibility access to follow the window.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -196,6 +239,23 @@ struct AppearancePane: View {
         }
         .formStyle(.grouped)
         .animation(.default, value: settings.menuBarTintEnabled)
+        .animation(.default, value: settings.menuBarTintStyle)
+        .animation(.default, value: settings.roundedCornersEnabled)
+        .animation(.default, value: settings.dimEnabled)
+    }
+
+    private func sliderRow(_ title: String, value: Binding<Double>, in range: ClosedRange<Double>, step: Double,
+                           label: @escaping (Double) -> String) -> some View {
+        LabeledContent(title) {
+            HStack {
+                Slider(value: value, in: range, step: step)
+                    .frame(maxWidth: 220)
+                Text(label(value.wrappedValue))
+                    .monospacedDigit()
+                    .foregroundStyle(.secondary)
+                    .frame(width: 44, alignment: .trailing)
+            }
+        }
     }
 
     private func tintRow(_ title: String, start: Binding<String>, end: Binding<String>, scheme: ColorScheme) -> some View {
@@ -207,6 +267,82 @@ struct AppearancePane: View {
                 if settings.menuBarTintStyle == .gradient {
                     ColorPicker("End", selection: end.color, supportsOpacity: true).labelsHidden()
                 }
+            }
+        }
+    }
+}
+
+/// The top of a desktop, drawn with the current shape, tint, border and shadow over your own wallpaper.
+private struct MenuBarPreview: View {
+    @ObservedObject var settings: AppSettings
+    @Environment(\.colorScheme) private var colorScheme
+    @State private var wallpaper: NSImage?
+    @State private var wallpaperColors: [String]?
+
+    private static let barHeight: CGFloat = 24
+
+    var body: some View {
+        ZStack(alignment: .top) {
+            MenuBarDecoration(fill: fill, shape: settings.menuBarShape, islands: Islands(left: 196, right: 172),
+                              border: settings.menuBarBorder, shadow: settings.menuBarShadow, barHeight: Self.barHeight) { outline, _ in
+                AnyView(Rectangle().fill(.regularMaterial).mask(outline))
+            }
+            .animation(.smooth(duration: 0.3), value: settings.menuBarShape)
+            HStack(spacing: 14) {
+                Image(systemName: "apple.logo")
+                Text("Finder").fontWeight(.bold)
+                Text("File")
+                Text("Edit")
+                Text("View")
+                Spacer()
+                Image(systemName: "wifi")
+                Image(systemName: "battery.75percent")
+                Image(systemName: "snowflake")
+                Text("Mon 9:41")
+            }
+            .font(.system(size: 12))
+            .foregroundStyle(colorScheme == .dark ? .white : .black)
+            .padding(.horizontal, 20)
+            .frame(height: Self.barHeight)
+        }
+        .frame(maxWidth: .infinity)
+        .frame(height: 70)
+        .background(alignment: .top) { backdrop }
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).strokeBorder(Color.primary.opacity(0.12)))
+        .onAppear(perform: loadWallpaper)
+    }
+
+    @ViewBuilder private var backdrop: some View {
+        if let wallpaper {
+            Image(nsImage: wallpaper).resizable().scaledToFill()
+        } else {
+            LinearGradient(colors: colorScheme == .dark ? [Color(hex: "#1F2A44"), Color(hex: "#3B2A55")]
+                                                        : [Color(hex: "#BFD9F5"), Color(hex: "#E2CFF3")],
+                           startPoint: .topLeading, endPoint: .bottomTrailing)
+        }
+    }
+
+    private var fill: [Color]? {
+        guard settings.menuBarTintEnabled else { return nil }
+        if settings.menuBarTintStyle == .wallpaper, let wallpaperColors { return wallpaperColors.map { Color(hex: $0) } }
+        let colors = colorScheme == .dark ? [settings.tintDarkStart, settings.tintDarkEnd] : [settings.tintLightStart, settings.tintLightEnd]
+        return (settings.menuBarTintStyle == .solid ? [colors[0]] : colors).map { Color(hex: $0) }
+    }
+
+    private func loadWallpaper() {
+        guard let screen = NSScreen.main, let url = NSWorkspace.shared.desktopImageURL(for: screen) else { return }
+        DispatchQueue.global(qos: .userInitiated).async {
+            let options: [CFString: Any] = [kCGImageSourceCreateThumbnailFromImageAlways: true,
+                                            kCGImageSourceThumbnailMaxPixelSize: 1200,
+                                            kCGImageSourceCreateThumbnailWithTransform: true]
+            let image = CGImageSourceCreateWithURL(url as CFURL, nil)
+                .flatMap { CGImageSourceCreateThumbnailAtIndex($0, 0, options as CFDictionary) }
+                .map { NSImage(cgImage: $0, size: .zero) }
+            let colors = MenuBarAppearance.topColors(of: url)
+            DispatchQueue.main.async {
+                wallpaper = image
+                wallpaperColors = colors
             }
         }
     }
