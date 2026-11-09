@@ -1,0 +1,22 @@
+# Icicle
+
+A macOS menu bar manager with Windows 11-style window snapping. Inspired by [Ice](https://github.com/jordanbaird/Ice).
+
+## Features
+
+- **Hide menu bar icons** — ⌘-drag icons left of the `‹` divider, then click ❄ to hide or show them.
+- **Always-hidden section** — a second divider for icons you almost never need (⌥-click ❄ to reveal).
+- **Show on click or hover** over empty menu bar space, with automatic rehiding.
+- **Snap Layouts** — drag a window into the menu bar to pick from 8 layouts; drag to edges or corners for halves and quarters.
+- **Global hotkeys** — ⌃⌥⌘I toggles hidden icons; ⌃⌥← / ⌃⌥→ / ⌃⌥↩ snap the front window.
+
+## Build
+
+Requires macOS 14+ and the Xcode command line tools.
+
+```bash
+./build.sh            # builds build/Icicle.app
+./build.sh --install  # also copies it to /Applications
+```
+
+Window snapping and hover-to-show need Accessibility access (Settings → Window Snapping → Grant Access). The build is ad-hoc signed, so macOS may ask again after each rebuild.
