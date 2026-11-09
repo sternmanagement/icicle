@@ -20,6 +20,9 @@ struct KeyCombo: Equatable, Codable {
     static let defaultMaximize = KeyCombo(
         keyCode: UInt32(kVK_Return), carbonModifiers: UInt32(controlKey | optionKey), keyName: "↩"
     )
+    static let defaultClipboard = KeyCombo(
+        keyCode: UInt32(kVK_ANSI_V), carbonModifiers: UInt32(cmdKey | shiftKey), keyName: "V"
+    )
 
     var displayString: String {
         var s = ""

@@ -1,4 +1,5 @@
 import AppKit
+import Combine
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var manager: MenuBarManager!
@@ -15,7 +16,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         settingsWindow.showAllItems = { [weak self] in self?.manager.showHidden(includingAlwaysHidden: true) }
         snapper.start()
         manager.start()
+        extras.start()
     }
+
+    private let extras = Extras()
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         settingsWindow.show(tab: .general)
@@ -43,5 +47,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         mainMenu.addItem(editMenuItem)
 
         NSApp.mainMenu = mainMenu
+    }
+}
+
+/// The optional features beyond the menu bar and snapping. Each follows its setting live.
+final class Extras {
+    private let settings = AppSettings.shared
+    private let clipboardPicker = ClipboardPicker()
+    private var cancellables = Set<AnyCancellable>()
+
+    func start() {
+        settings.objectWillChange
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] in self?.apply() }
+            .store(in: &cancellables)
+        apply()
+    }
+
+    private func apply() {
+        ClipboardHistory.shared.setEnabled(settings.clipboardEnabled)
+        HotKeyCenter.shared.register(id: 20, combo: settings.clipboardEnabled ? settings.clipboardHotKey : nil) { [weak self] in
+            self?.clipboardPicker.toggle()
+        }
     }
 }

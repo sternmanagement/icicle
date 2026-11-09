@@ -46,6 +46,7 @@ struct SettingsView: View {
         case .general: GeneralPane(settings: settings)
         case .layout: LayoutPane(settings: settings, items: itemsModel, showAllItems: showAllItems)
         case .snapping: SnappingPane(settings: settings)
+        case .clipboard: ClipboardPane(settings: settings, history: .shared)
         case .hotkeys: HotkeysPane(settings: settings)
         case .about: AboutPane()
         }
@@ -130,7 +131,7 @@ private struct PaneHeader: View {
 }
 
 /// Green "Granted" pill, or a button that opens the system prompt.
-private struct AccessibilityRow: View {
+struct AccessibilityRow: View {
     let reason: String
     @State private var trusted = AccessibilityAccess.isTrusted
     private let poll = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
@@ -676,7 +677,7 @@ private struct HotkeysPane: View {
     }
 }
 
-private struct KeyRecorder: View {
+struct KeyRecorder: View {
     @Binding var combo: KeyCombo?
     @State private var isRecording = false
     @State private var monitor: Any?

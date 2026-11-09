@@ -62,6 +62,10 @@ final class AppSettings: ObservableObject {
     @Published var snapRightHotKey: KeyCombo? { didSet { save(snapRightHotKey, forKey: Key.snapRightHotKey) } }
     @Published var snapMaximizeHotKey: KeyCombo? { didSet { save(snapMaximizeHotKey, forKey: Key.snapMaximizeHotKey) } }
 
+    @Published var clipboardEnabled: Bool { didSet { defaults.set(clipboardEnabled, forKey: Key.clipboardEnabled) } }
+    @Published var clipboardAutoPaste: Bool { didSet { defaults.set(clipboardAutoPaste, forKey: Key.clipboardAutoPaste) } }
+    @Published var clipboardHotKey: KeyCombo? { didSet { save(clipboardHotKey, forKey: Key.clipboardHotKey) } }
+
     var hasCompletedOnboarding: Bool {
         get { defaults.bool(forKey: Key.hasCompletedOnboarding) }
         set { defaults.set(newValue, forKey: Key.hasCompletedOnboarding) }
@@ -85,6 +89,9 @@ final class AppSettings: ObservableObject {
         static let snapLeftHotKey = "snapLeftHotKey"
         static let snapRightHotKey = "snapRightHotKey"
         static let snapMaximizeHotKey = "snapMaximizeHotKey"
+        static let clipboardEnabled = "clipboardEnabled"
+        static let clipboardAutoPaste = "clipboardAutoPaste"
+        static let clipboardHotKey = "clipboardHotKey"
     }
 
     private init() {
@@ -100,6 +107,8 @@ final class AppSettings: ObservableObject {
             Key.snapLayoutsEnabled: true,
             Key.edgeSnappingEnabled: true,
             Key.snapGap: 8.0,
+            Key.clipboardEnabled: true,
+            Key.clipboardAutoPaste: true,
         ])
 
         autoRehide = defaults.bool(forKey: Key.autoRehide)
@@ -118,6 +127,9 @@ final class AppSettings: ObservableObject {
         snapLeftHotKey = Self.load(Key.snapLeftHotKey, from: defaults, fallback: .defaultSnapLeft)
         snapRightHotKey = Self.load(Key.snapRightHotKey, from: defaults, fallback: .defaultSnapRight)
         snapMaximizeHotKey = Self.load(Key.snapMaximizeHotKey, from: defaults, fallback: .defaultMaximize)
+        clipboardEnabled = defaults.bool(forKey: Key.clipboardEnabled)
+        clipboardAutoPaste = defaults.bool(forKey: Key.clipboardAutoPaste)
+        clipboardHotKey = Self.load(Key.clipboardHotKey, from: defaults, fallback: .defaultClipboard)
     }
 
     // Empty data marks a shortcut the user deliberately cleared, so it doesn't fall back to the default.
