@@ -13,7 +13,7 @@ enum TintStyle: String, CaseIterable, Identifiable {
 /// macOS 26, so a click-through window just below its level shows through behind the items.
 final class MenuBarAppearance {
     private let settings = AppSettings.shared
-    private var panels: [NSPanel] = []
+    private var panels: [MenuBarOverlayPanel] = []
     private var cancellables = Set<AnyCancellable>()
 
     func start() {
@@ -58,8 +58,8 @@ final class MenuBarAppearance {
         screen.auxiliaryTopLeftArea != nil
     }
 
-    private func makePanel(for screen: NSScreen) -> NSPanel {
-        let panel = NSPanel(contentRect: Self.menuBarFrame(of: screen), styleMask: [.borderless, .nonactivatingPanel],
+    private func makePanel(for screen: NSScreen) -> MenuBarOverlayPanel {
+        let panel = MenuBarOverlayPanel(contentRect: Self.menuBarFrame(of: screen), styleMask: [.borderless, .nonactivatingPanel],
                             backing: .buffered, defer: false)
         panel.isOpaque = false
         panel.backgroundColor = .clear
@@ -68,7 +68,9 @@ final class MenuBarAppearance {
         panel.isReleasedWhenClosed = false
         panel.hidesOnDeactivate = false
         panel.level = NSWindow.Level(rawValue: NSWindow.Level.mainMenu.rawValue - 1)
-        panel.collectionBehavior = [.canJoinAllSpaces, .stationary, .ignoresCycle, .fullScreenNone]
+        // No full-screen flag: .fullScreenNone gets the panel hidden in the menu bar strip, and without
+        // .fullScreenAuxiliary it still stays out of full-screen apps, where it would cover their content.
+        panel.collectionBehavior = [.canJoinAllSpaces, .stationary, .ignoresCycle]
         return panel
     }
 
@@ -78,6 +80,12 @@ final class MenuBarAppearance {
         let height = fromVisible > 0 ? fromVisible : (screen.safeAreaInsets.top > 0 ? screen.safeAreaInsets.top : 24)
         return CGRect(x: screen.frame.minX, y: screen.frame.maxY - height, width: screen.frame.width, height: height)
     }
+}
+
+/// AppKit keeps windows below the menu bar's level out of the menu bar strip, nudging them down under it.
+/// This panel opts out so it can sit exactly behind the menu bar.
+final class MenuBarOverlayPanel: NSPanel {
+    override func constrainFrameRect(_ frameRect: NSRect, to screen: NSScreen?) -> NSRect { frameRect }
 }
 
 private struct MenuBarTintView: View {
