@@ -19,32 +19,32 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.2.0</string>
+	<string>1.3.0</string>
 	<key>CFBundleVersion</key>
-	<string>6</string>
+	<string>7</string>
+	<key>ICUpdateRepo</key>
+	<string>sternmanagement/icicle</string>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.utilities</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>14.0</string>
 	<key>LSUIElement</key>
 	<true/>
-	<key>ICUpdateRepo</key>
-	<string>sternmanagement/icicle</string>
 	<key>NSAppleEventsUsageDescription</key>
 	<string>Icicle shows and controls what's playing in Music and Spotify on the lock screen.</string>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>Icicle shows your next event in the lock screen's Calendar widget.</string>
+	<key>NSHumanReadableCopyright</key>
+	<string>Icicle menu bar manager</string>
 	<key>NSLocationUsageDescription</key>
 	<string>Icicle uses your location to show local weather and sunrise times on the lock screen.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Icicle uses your location to show local weather and sunrise times on the lock screen.</string>
-	<key>NSCalendarsFullAccessUsageDescription</key>
-	<string>Icicle shows your next event in the lock screen's Calendar widget.</string>
-	<key>NSRemindersFullAccessUsageDescription</key>
-	<string>Icicle shows upcoming reminders in the lock screen's Reminders widget.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Your desktop picture comes from Photos; Icicle shows the same picture on your lock screen.</string>
-	<key>NSHumanReadableCopyright</key>
-	<string>Icicle menu bar manager</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>NSRemindersFullAccessUsageDescription</key>
+	<string>Icicle shows upcoming reminders in the lock screen's Reminders widget.</string>
 </dict>
 </plist>
