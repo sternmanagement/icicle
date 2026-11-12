@@ -1,6 +1,6 @@
 # Icicle
 
-A macOS menu bar manager with Windows 11-style window snapping. Inspired by [Ice](https://github.com/jordanbaird/Ice).
+A macOS menu bar manager with Windows 11-style window snapping and a customizable lock screen. Inspired by [Ice](https://github.com/jordanbaird/Ice). The lock screen was a separate app, Glass Lock, and is now built in.
 
 ## Features
 
@@ -8,6 +8,7 @@ A macOS menu bar manager with Windows 11-style window snapping. Inspired by [Ice
 - **Always-hidden section** — a second divider for icons you almost never need (⌥-click ❄ to reveal).
 - **Show on click or hover** over empty menu bar space, with automatic rehiding.
 - **Snap Layouts** — drag a window into the menu bar to pick from 8 layouts; drag to edges or corners for halves and quarters.
+- **Hot corners** — give each corner of the screen its own action: open the lock screen, lock the Mac, show or hide menu bar icons, clipboard history, Mission Control, application windows, show desktop, screen saver, display sleep, or open any app. Optionally only while holding a key, with an adjustable wait.
 - **Clipboard history** — ⌘⇧V opens your last 50 copies (text and images); search, pick, and it pastes. Kept in memory only.
 - **Window switcher** — hold ⌥ and tap Tab to pick any window, minimized ones included (off by default).
 - **Saved workspaces** — save every app's window positions under a name; restore from the ❄ menu or ⌃⌥1–9 (off by default).
@@ -17,7 +18,23 @@ A macOS menu bar manager with Windows 11-style window snapping. Inspired by [Ice
 - **Rounded screen corners** — soft corners on every display, over everything (off by default).
 - **Dim background windows** — fades everything except the window you're using (off by default).
 - **Focus border** — an optional coloured outline around the window you're working in.
-- **Global hotkeys** — ⌃⌥⌘I toggles hidden icons; ⌃⌥← / ⌃⌥→ / ⌃⌥↩ snap the front window.
+- **Global hotkeys** — ⌃⌥⌘I toggles hidden icons; ⌃⌥← / ⌃⌥→ / ⌃⌥↩ snap the front window. Function keys work as shortcuts on their own.
+- **Updates itself** — checks this repository's releases, then downloads, verifies and installs the new version.
+- **Setup Assistant and status checklist** — every permission Icicle needs, each with one button and a live check mark.
+
+### Lock screen (off by default)
+
+Formerly the Glass Lock app. Turn it on in Settings → Lock Screen; if Glass Lock was installed, its designs, timers and shortcut are brought over automatically.
+
+- **Clock and date** in the macOS lock screen style, plus battery level.
+- **Now Playing** for Music and Spotify: artwork, play/pause, previous/next, seek and volume.
+- **Timers and stopwatches** — start them from the ❄ menu; a running timer counts down beside the ❄ icon.
+- **Claude Code** — whether a session is working, how long it has run, and today's sessions and tokens, read from `~/.claude/projects`. Nothing leaves your Mac.
+- **Notifications** from your other apps (needs Full Disk Access), as a count, stack or list.
+- **Widgets** — Weather, Calendar, Reminders, Batteries, World Clock, Sunrise, Moon and Claude Code.
+- **Customize** it like an iPhone lock screen: clock font and colour, widgets, layout and wallpaper. Keep several designs and switch from the ❄ menu.
+- **Open it over your desktop** with a hot corner or a shortcut, without locking.
+- **On the real lock screen** — Icicle installs a screen saver (named Glass Lock) that macOS shows when your Mac locks or goes idle. ⌃⌥⌘L locks straight into it. Apple doesn't let apps replace the password screen itself; press any key to get the prompt.
 
 ## Download
 
@@ -35,7 +52,7 @@ Requires macOS 14+ and the Xcode command line tools.
 
 macOS opens Mission Control when a window is dragged to the top of the screen, and its own tiling reacts to edge drags. Turn on **Settings → Window Snapping → Let Icicle handle window dragging** to switch both off (this restarts the Dock; turn it off again to restore them).
 
-Window snapping, the icon list and hover-to-show need Accessibility access (Settings → Window Snapping → Grant Access). `build.sh` signs with a local self-signed identity (kept in `~/Library/Application Support/Icicle Build`), so the permission survives rebuilds.
+Window snapping, the icon list and hover-to-show need Accessibility access (Settings → Window Snapping → Grant Access). The lock screen asks for what its widgets use: Full Disk Access for notifications, Calendar, Reminders, Location, and control of Music or Spotify. `build.sh` signs with a local self-signed identity (kept in `~/Library/Application Support/Icicle Build`), so the permission survives rebuilds.
 
 ## Releasing
 

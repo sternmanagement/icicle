@@ -14,10 +14,27 @@ echo "Compiling…"
 swiftc -O -swift-version 5 \
     -sdk "$SDK" -target "$ARCH-apple-macos14.0" \
     -framework AppKit -framework SwiftUI -framework Carbon -framework ServiceManagement \
-    Sources/*.swift \
+    Sources/*.swift Sources/LockScreen/*.swift \
     -o "$APP/Contents/MacOS/Icicle"
 
 cp Info.plist "$APP/Contents/Info.plist"
+
+# The screen saver that puts the lock screen on the real macOS lock screen: the same views, compiled as a
+# loadable bundle. It keeps Glass Lock's name and identifier so an existing choice in System Settings carries over.
+echo "Compiling screen saver…"
+SAVER="$APP/Contents/Resources/Glass Lock.saver"
+mkdir -p "$SAVER/Contents/MacOS"
+swiftc -O -swift-version 5 -parse-as-library -module-name GlassLockSaver \
+    -sdk "$SDK" -target "$ARCH-apple-macos14.0" \
+    -emit-library -Xlinker -bundle -framework ScreenSaver \
+    Sources/LockScreen/*.swift Saver/GlassLockSaverView.swift \
+    -o "$SAVER/Contents/MacOS/GlassLockSaver"
+VERSION="$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" Info.plist)"
+BUILD="$(/usr/libexec/PlistBuddy -c "Print CFBundleVersion" Info.plist)"
+# The build number carries a timestamp: the app replaces the installed copy whenever the two differ.
+sed -e "s#__VERSION__#$VERSION#g" -e "s#__BUILD__#$BUILD.$(date +%s)#g" -e "s#__BUNDLE_ID__#io.github.local.glasslock#g" \
+    Saver/Info.plist > "$SAVER/Contents/Info.plist"
+plutil -lint "$SAVER/Contents/Info.plist" >/dev/null
 
 echo "Rendering icon…"
 swiftc -O -sdk "$SDK" -target "$ARCH-apple-macos14.0" tools/make_icon.swift -o build/make_icon
@@ -44,6 +61,7 @@ if [[ ! -f "$KEYCHAIN" ]]; then
     rm -rf "$TMP"
 fi
 security unlock-keychain -p icicle "$KEYCHAIN"
+codesign --force --keychain "$KEYCHAIN" --sign "$IDENTITY" "$SAVER"
 codesign --force --keychain "$KEYCHAIN" --sign "$IDENTITY" "$APP"
 
 if [[ "${1:-}" == "--install" ]]; then

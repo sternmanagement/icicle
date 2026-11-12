@@ -1,8 +1,9 @@
 import AppKit
 import Carbon.HIToolbox
 import Combine
+import UserNotifications
 
-final class AppDelegate: NSObject, NSApplicationDelegate {
+final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDelegate {
     private var manager: MenuBarManager!
     private let snapper = WindowSnapper()
     private let settingsWindow = SettingsWindowController()
@@ -25,6 +26,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         focusBorder.start()
         screenCorners.start()
         dimmer.start()
+
+        // Finished timers notify even while one of Icicle's own windows is in front.
+        if Bundle.main.bundleIdentifier != nil { UNUserNotificationCenter.current().delegate = self }
+        let lockScreen = LockScreenFeature.shared
+        lockScreen.setIconTitle = { [weak self] in self?.manager.iconTitle = $0 }
+        lockScreen.openSettings = { [weak self] tab in self?.settingsWindow.show(tab: tab) }
+        manager.extraMenuItems = { lockScreen.menuItems() }
+        lockScreen.start()
+
+        let corners = HotCorners.shared
+        corners.toggleMenuBarItems = { [weak self] in self?.manager.toggleHidden() }
+        corners.toggleClipboard = { [weak self] in self?.extras.toggleClipboard() }
+        corners.start()
+
+        // First launch, or the first one after an update that needs something new: walk through setup.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+            AppLocation.offerMoveIfNeeded()
+            if SetupWindow.needsShowing { SetupWindow.show() }
+        }
+    }
+
+    func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification,
+                                withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+        completionHandler([.banner, .sound])
     }
 
     private let appearance = MenuBarAppearance()
@@ -76,6 +101,10 @@ final class Extras {
             .sink { [weak self] in self?.apply() }
             .store(in: &cancellables)
         apply()
+    }
+
+    func toggleClipboard() {
+        if settings.clipboardEnabled { clipboardPicker.toggle() }
     }
 
     private func apply() {

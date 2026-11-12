@@ -47,8 +47,10 @@ struct SettingsView: View {
         case .layout: LayoutPane(settings: settings, items: itemsModel, showAllItems: showAllItems)
         case .snapping: SnappingPane(settings: settings)
         case .windows: WindowsPane(settings: settings)
+        case .hotCorners: HotCornersPane(settings: settings)
         case .clipboard: ClipboardPane(settings: settings, history: .shared)
         case .appearance: AppearancePane(settings: settings)
+        case .lockScreen: LockScreenPane(settings: settings)
         case .hotkeys: HotkeysPane(settings: settings)
         case .about: AboutPane()
         }
@@ -183,6 +185,9 @@ private struct GeneralPane: View {
                 LabeledContent("Menu bar icon") {
                     IconStylePicker(selection: $settings.iconStyle)
                 }
+                LabeledContent("Permissions and setup") {
+                    Button("Setup Assistant…") { SetupWindow.show() }
+                }
             }
 
             Section("Showing hidden items") {
@@ -213,6 +218,8 @@ private struct GeneralPane: View {
                     }
                 }
             }
+
+            StatusSection()
         }
         .formStyle(.grouped)
         .animation(.default, value: settings.autoRehide)
@@ -703,11 +710,23 @@ private struct HotkeysPane: View {
                 }
             } header: {
                 Text("Window snapping")
+            }
+
+            Section {
+                LabeledContent("Lock now") {
+                    KeyRecorder(combo: $settings.lockNowHotKey)
+                }
+                LabeledContent("Open or close on the desktop") {
+                    KeyRecorder(combo: $settings.lockScreenOpenHotKey)
+                }
+            } header: {
+                Text("Lock screen")
             } footer: {
-                Text("Click a shortcut, then press the new key combination. It must include ⌘, ⌥ or ⌃. Press Esc to cancel.")
+                Text("Click a shortcut, then press the new key combination. It must include ⌘, ⌥ or ⌃, or be a function key. Press Esc to cancel.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
+            .disabled(!settings.lockScreenEnabled)
         }
         .formStyle(.grouped)
     }
@@ -791,14 +810,16 @@ private struct AboutPane: View {
                 Text("Icicle").font(.system(size: 30, weight: .bold, design: .rounded))
                 Text("Version \(version)").font(.callout).foregroundStyle(.secondary)
             }
-            Text("Hide the menu bar icons you rarely need, and snap windows into tidy layouts.")
+            Text("Hide the menu bar icons you rarely need, snap windows into tidy layouts, and lock your Mac in style.")
                 .multilineTextAlignment(.center)
-                .frame(maxWidth: 340)
+                .frame(maxWidth: 360)
             HStack(spacing: 8) {
                 FeatureChip(symbol: "menubar.rectangle", title: "Menu bar sections")
                 FeatureChip(symbol: "rectangle.split.2x2", title: "Snap Layouts")
+                FeatureChip(symbol: "lock.fill", title: "Lock screen")
                 FeatureChip(symbol: "command", title: "Global hotkeys")
             }
+            UpdateRow().padding(.top, 6)
             Spacer()
             HStack {
                 Text("Inspired by Ice by Jordan Baird.")

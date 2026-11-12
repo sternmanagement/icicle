@@ -90,6 +90,17 @@ final class AppSettings: ObservableObject {
     @Published var dimEnabled: Bool { didSet { defaults.set(dimEnabled, forKey: Key.dimEnabled) } }
     @Published var dimAmount: Double { didSet { defaults.set(dimAmount, forKey: Key.dimAmount) } }
 
+    @Published var lockScreenEnabled: Bool { didSet { defaults.set(lockScreenEnabled, forKey: Key.lockScreenEnabled) } }
+    @Published var lockNowHotKey: KeyCombo? { didSet { save(lockNowHotKey, forKey: Key.lockNowHotKey) } }
+    @Published var lockScreenOpenHotKey: KeyCombo? { didSet { save(lockScreenOpenHotKey, forKey: Key.lockScreenOpenHotKey) } }
+
+    /// What each screen corner does: HotCornerPosition raw value → HotCornerAction raw value. Missing means nothing.
+    @Published var hotCorners: [String: String] { didSet { defaults.set(hotCorners, forKey: Key.hotCorners) } }
+    /// The app a corner opens, for corners set to "Open an app": HotCornerPosition raw value → the app's path.
+    @Published var hotCornerApps: [String: String] { didSet { defaults.set(hotCornerApps, forKey: Key.hotCornerApps) } }
+    @Published var hotCornerModifier: HotCornerModifier { didSet { defaults.set(hotCornerModifier.rawValue, forKey: Key.hotCornerModifier) } }
+    @Published var hotCornerDelay: Double { didSet { defaults.set(hotCornerDelay, forKey: Key.hotCornerDelay) } }
+
     var hasCompletedOnboarding: Bool {
         get { defaults.bool(forKey: Key.hasCompletedOnboarding) }
         set { defaults.set(newValue, forKey: Key.hasCompletedOnboarding) }
@@ -137,6 +148,13 @@ final class AppSettings: ObservableObject {
         static let roundedCornerRadius = "roundedCornerRadius"
         static let dimEnabled = "dimEnabled"
         static let dimAmount = "dimAmount"
+        static let lockScreenEnabled = "lockScreenEnabled"
+        static let lockNowHotKey = "lockNowHotKey"
+        static let lockScreenOpenHotKey = "lockScreenOpenHotKey"
+        static let hotCorners = "hotCorners"
+        static let hotCornerApps = "hotCornerApps"
+        static let hotCornerModifier = "hotCornerModifier"
+        static let hotCornerDelay = "hotCornerDelay"
     }
 
     private init() {
@@ -174,6 +192,9 @@ final class AppSettings: ObservableObject {
             Key.roundedCornerRadius: 12.0,
             Key.dimEnabled: false,
             Key.dimAmount: 0.3,
+            Key.lockScreenEnabled: false,
+            Key.hotCornerModifier: HotCornerModifier.none.rawValue,
+            Key.hotCornerDelay: 0.2,
         ])
 
         autoRehide = defaults.bool(forKey: Key.autoRehide)
@@ -216,6 +237,22 @@ final class AppSettings: ObservableObject {
         roundedCornerRadius = defaults.double(forKey: Key.roundedCornerRadius)
         dimEnabled = defaults.bool(forKey: Key.dimEnabled)
         dimAmount = defaults.double(forKey: Key.dimAmount)
+        lockScreenEnabled = defaults.bool(forKey: Key.lockScreenEnabled)
+        lockNowHotKey = Self.load(Key.lockNowHotKey, from: defaults, fallback: .defaultLockNow)
+        lockScreenOpenHotKey = Self.load(Key.lockScreenOpenHotKey, from: defaults, fallback: .defaultLockScreenOpen)
+        if let saved = defaults.dictionary(forKey: Key.hotCorners) as? [String: String] {
+            hotCorners = saved
+        } else {
+            // Glass Lock had a single hot corner, bottom left unless changed, which opened the lock screen.
+            let old = defaults.string(forKey: "hotCorner") ?? HotCornerPosition.bottomLeft.rawValue
+            let seeded = defaults.bool(forKey: Key.lockScreenEnabled) && HotCornerPosition(rawValue: old) != nil
+                ? [old: HotCornerAction.lockScreen.rawValue] : [:]
+            hotCorners = seeded
+            defaults.set(seeded, forKey: Key.hotCorners)
+        }
+        hotCornerApps = defaults.dictionary(forKey: Key.hotCornerApps) as? [String: String] ?? [:]
+        hotCornerModifier = HotCornerModifier(rawValue: defaults.string(forKey: Key.hotCornerModifier) ?? "") ?? .none
+        hotCornerDelay = defaults.double(forKey: Key.hotCornerDelay)
     }
 
     // Empty data marks a shortcut the user deliberately cleared, so it doesn't fall back to the default.

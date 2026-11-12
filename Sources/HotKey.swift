@@ -26,6 +26,12 @@ struct KeyCombo: Equatable, Codable {
     static let defaultWindowSwitcher = KeyCombo(
         keyCode: UInt32(kVK_Tab), carbonModifiers: UInt32(optionKey), keyName: "⇥"
     )
+    static let defaultLockNow = KeyCombo(
+        keyCode: UInt32(kVK_ANSI_L), carbonModifiers: UInt32(controlKey | optionKey | cmdKey), keyName: "L"
+    )
+    static let defaultLockScreenOpen = KeyCombo(
+        keyCode: UInt32(kVK_ANSI_O), carbonModifiers: UInt32(controlKey | optionKey | cmdKey), keyName: "O"
+    )
 
     var displayString: String {
         var s = ""
@@ -43,9 +49,10 @@ struct KeyCombo: Equatable, Codable {
     }
 
     /// Returns nil unless the event carries ⌘, ⌥ or ⌃ — a bare key would swallow normal typing.
+    /// Function keys (F1–F20) are the exception: nothing types with them.
     init?(event: NSEvent) {
         let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
-        guard !flags.intersection([.command, .option, .control]).isEmpty else { return nil }
+        guard !flags.intersection([.command, .option, .control]).isEmpty || Self.functionKeys[Int(event.keyCode)] != nil else { return nil }
 
         var mods: UInt32 = 0
         if flags.contains(.command) { mods |= UInt32(cmdKey) }
@@ -64,12 +71,16 @@ struct KeyCombo: Equatable, Codable {
             kVK_ForwardDelete: "⌦", kVK_LeftArrow: "←", kVK_RightArrow: "→",
             kVK_UpArrow: "↑", kVK_DownArrow: "↓", kVK_Home: "↖", kVK_End: "↘",
             kVK_PageUp: "⇞", kVK_PageDown: "⇟",
-            kVK_F1: "F1", kVK_F2: "F2", kVK_F3: "F3", kVK_F4: "F4", kVK_F5: "F5", kVK_F6: "F6",
-            kVK_F7: "F7", kVK_F8: "F8", kVK_F9: "F9", kVK_F10: "F10", kVK_F11: "F11", kVK_F12: "F12",
         ]
-        if let name = special[keyCode] { return name }
+        if let name = special[keyCode] ?? functionKeys[keyCode] { return name }
         return (event.charactersIgnoringModifiers ?? "?").uppercased()
     }
+
+    private static let functionKeys: [Int: String] = {
+        let codes = [kVK_F1, kVK_F2, kVK_F3, kVK_F4, kVK_F5, kVK_F6, kVK_F7, kVK_F8, kVK_F9, kVK_F10,
+                     kVK_F11, kVK_F12, kVK_F13, kVK_F14, kVK_F15, kVK_F16, kVK_F17, kVK_F18, kVK_F19, kVK_F20]
+        return Dictionary(uniqueKeysWithValues: codes.enumerated().map { ($1, "F\($0 + 1)") })
+    }()
 }
 
 /// Global hotkeys via Carbon's RegisterEventHotKey, which needs no Accessibility permission.

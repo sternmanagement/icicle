@@ -36,6 +36,13 @@ final class MenuBarManager: NSObject {
 
     /// Where the ❄ icon sits on screen.
     var iconFrame: CGRect? { iconItem.button?.window?.frame }
+
+    /// Short text shown beside the ❄ icon, such as a running timer's countdown.
+    var iconTitle: String? {
+        didSet { if iconTitle != oldValue { applyIconTitle() } }
+    }
+    /// Other features' entries for the ❄ menu: `feature` sits with snapping and workspaces, `app` above Quit.
+    var extraMenuItems: (() -> (feature: [NSMenuItem], app: [NSMenuItem]))?
     private var hiddenDivider: NSStatusItem { iconIsA ? itemB : itemA }
 
     /// While the hidden section is collapsed, other apps' icons left of this are hidden, even though
@@ -198,6 +205,7 @@ final class MenuBarManager: NSObject {
         image?.isTemplate = true
         iconItem.button?.image = image
         iconItem.button?.toolTip = "Click to show or hide menu bar items\n⌥-click for always-hidden items\nRight-click for options"
+        applyIconTitle()
 
         hiddenDivider.button?.toolTip = "Icicle: items left of this are hidden. ⌘-drag to move."
         if isHiddenShown {
@@ -227,6 +235,24 @@ final class MenuBarManager: NSObject {
     }
 
     private static let settleDelay: TimeInterval = 0.25
+
+    private func applyIconTitle() {
+        // The two items can swap roles, so the divider is cleared as well.
+        hiddenDivider.button?.title = ""
+        hiddenDivider.button?.imagePosition = .imageOnly
+        guard let button = iconItem.button, button.title != (iconTitle ?? "") else { return }
+        // Status items are a whole number of points wide: the button's width, rounded up, plus padding.
+        let before = button.fittingSize.width.rounded(.up)
+        button.font = .monospacedDigitSystemFont(ofSize: NSFont.systemFontSize, weight: .regular)
+        button.title = iconTitle ?? ""
+        button.imagePosition = iconTitle == nil ? .imageOnly : .imageLeading
+        // A wider icon pushes everything left of it over by the same amount, dividers included. Their
+        // remembered positions decide how wide a collapsed divider may be, so move those too.
+        let delta = button.fittingSize.width.rounded(.up) - before
+        guard delta != 0 else { return }
+        for (id, frame) in expandedFrames { expandedFrames[id] = frame.offsetBy(dx: -delta, dy: 0) }
+        if !collapsedItems.isEmpty { updateLayout() }
+    }
 
     private func expand(_ item: NSStatusItem, dimmed: Bool) {
         let id = ObjectIdentifier(item)
@@ -405,9 +431,16 @@ final class MenuBarManager: NSObject {
             menu.addItem(workspacesItem)
         }
 
+        let extras = extraMenuItems?()
+        if let feature = extras?.feature, !feature.isEmpty {
+            menu.addItem(.separator())
+            feature.forEach(menu.addItem)
+        }
+
         menu.addItem(.separator())
         menu.addItem(menuItem("Arrange Menu Bar…", symbol: "menubar.rectangle", action: #selector(menuOpenLayout)))
         menu.addItem(menuItem("Settings…", symbol: "gearshape", action: #selector(menuOpenSettings), key: ","))
+        extras?.app.forEach(menu.addItem)
         menu.addItem(.separator())
         let quit = NSMenuItem(title: "Quit Icicle", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         quit.image = symbolImage("power")

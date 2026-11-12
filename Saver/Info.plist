@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key><string>en</string>
+	<key>CFBundleExecutable</key><string>GlassLockSaver</string>
+	<key>CFBundleIdentifier</key><string>__BUNDLE_ID__.saver</string>
+	<key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
+	<key>CFBundleName</key><string>Glass Lock</string>
+	<key>CFBundleDisplayName</key><string>Glass Lock</string>
+	<key>CFBundlePackageType</key><string>BNDL</string>
+	<key>CFBundleShortVersionString</key><string>__VERSION__</string>
+	<key>CFBundleVersion</key><string>__BUILD__</string>
+	<key>LSMinimumSystemVersion</key><string>14.0</string>
+	<key>NSPrincipalClass</key><string>GlassLockSaverView</string>
+</dict>
+</plist>
